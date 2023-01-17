@@ -79,13 +79,13 @@ func TestFrame(t *testing.T) {
 							Depth:  1.8,
 						},
 					},
-					&glue{
+					&glueBox{
 						Length: 0,
 						Plus:   stretchAmount{1, 1},
 					},
 				},
 			},
-			&glue{
+			&glueBox{
 				Length: 0,
 				Plus:   stretchAmount{1, 1},
 			},
@@ -96,7 +96,7 @@ func TestFrame(t *testing.T) {
 					Depth:  2,
 				},
 				Contents: []Box{
-					&glue{
+					&glueBox{
 						Length: 0,
 						Plus:   stretchAmount{1, 1},
 					},
@@ -107,7 +107,7 @@ func TestFrame(t *testing.T) {
 							Depth:  0,
 						},
 					},
-					&glue{
+					&glueBox{
 						Length: 0,
 						Plus:   stretchAmount{1, 1},
 					},
@@ -134,5 +134,5 @@ func TestFrame(t *testing.T) {
 var _ Box = &RuleBox{}
 var _ Box = &vBox{}
 var _ Box = Kern(0)
-var _ Box = &glue{}
+var _ Box = &glueBox{}
 var _ Box = &TextBox{}

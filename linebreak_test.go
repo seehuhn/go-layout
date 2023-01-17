@@ -3,7 +3,6 @@ package layout
 import (
 	"fmt"
 	"math"
-	"strings"
 	"testing"
 
 	"golang.org/x/text/language"
@@ -12,16 +11,11 @@ import (
 	"seehuhn.de/go/pdf/font/simple"
 	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/pdf/pages"
-	"seehuhn.de/go/sfnt/funit"
 )
 
 func TestLineBreaks(t *testing.T) {
 	const fontSize = 10
 	hSize := math.Round(15 / 2.54 * 72)
-	parFillSkip := &glue{
-		Plus: stretchAmount{Val: 1, Level: 1},
-		Text: "\n",
-	}
 
 	out, err := pdf.Create("test_LineBreaks.pdf")
 	if err != nil {
@@ -34,58 +28,14 @@ func TestLineBreaks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	space := F1.Layout([]rune{' '})
-	var spaceWidth funit.Int
-	if len(space) == 1 && space[0].Gid != 0 {
-		spaceWidth = funit.Int(space[0].Advance)
-	} else {
-		space = nil
-		spaceWidth = funit.Int(F1.UnitsPerEm / 4)
-	}
-	pdfSpaceWidth := F1.ToPDF(fontSize, spaceWidth)
-
-	spaceGlue := &glue{
-		Length: pdfSpaceWidth,
-		Plus:   stretchAmount{Val: pdfSpaceWidth / 2},
-		Minus:  stretchAmount{Val: pdfSpaceWidth / 3},
-		Text:   " ",
-	}
-	xSpaceGlue := &glue{
-		Length: 1.5 * pdfSpaceWidth,
-		Plus:   stretchAmount{Val: pdfSpaceWidth * 1.5},
-		Minus:  stretchAmount{Val: pdfSpaceWidth},
-		Text:   " ",
-	}
-
-	var hModeMaterial []interface{}
-	endOfSentence := false
-	for i, f := range strings.Fields(testText) {
-		if i > 0 {
-			if endOfSentence {
-				hModeMaterial = append(hModeMaterial, xSpaceGlue)
-				endOfSentence = false
-			} else {
-				hModeMaterial = append(hModeMaterial, spaceGlue)
-			}
-		}
-		gg := F1.Typeset(f, fontSize)
-		hModeMaterial = append(hModeMaterial, &hGlyphs{
-			glyphs:   gg,
-			font:     F1,
-			fontSize: fontSize,
-			width:    F1.ToPDF(fontSize, gg.AdvanceWidth()),
-		})
-	}
+	hModeMaterial := TokenizeParagraph(testText, &fontInfo{F1, 10})
 
 	// TODO(voss):
 	// - check that no node has infinite shrinkability (since otherwise the
 	//   whole paragraph would fit into a single line)
-	// - remove trailing space or glue, if any
-	// - add an infinite penalty before the ParFillSkip glue
-	hModeMaterial = append(hModeMaterial, parFillSkip)
 
 	g := &lineBreakGraph{
-		hlist:     hModeMaterial,
+		hlist:     hModeMaterial.tokens,
 		textWidth: hSize,
 		rightSkip: &glue{Plus: stretchAmount{Val: 36, Level: 0}},
 	}
@@ -106,13 +56,15 @@ func TestLineBreaks(t *testing.T) {
 	for _, e := range breaks {
 		var line []Box
 		if g.leftSkip != nil {
-			line = append(line, g.leftSkip)
+			leftSkip := glueBox(*g.leftSkip)
+			line = append(line, &leftSkip)
 		}
 		for _, item := range g.hlist[v.pos:e] {
 			switch h := item.(type) {
-			case *glue:
-				line = append(line, h)
-			case *hGlyphs:
+			case *hModeGlue:
+				glue := glueBox(h.glue)
+				line = append(line, &glue)
+			case *hModeText:
 				line = append(line, &TextBox{
 					Font:     h.font,
 					FontSize: h.fontSize,
@@ -123,7 +75,8 @@ func TestLineBreaks(t *testing.T) {
 			}
 		}
 		if g.rightSkip != nil {
-			line = append(line, g.rightSkip)
+			rightSkip := glueBox(*g.rightSkip)
+			line = append(line, &rightSkip)
 		}
 		lines = append(lines, HBoxTo(g.textWidth, line...))
 		v = g.To(v, e)

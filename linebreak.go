@@ -1,27 +1,8 @@
-// seehuhn.de/go/pdf - a library for reading and writing PDF files
-// Copyright (C) 2021  Jochen Voss <voss@seehuhn.de>
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
 package layout
 
 import (
 	"fmt"
 	"math"
-
-	"seehuhn.de/go/pdf/font"
-	"seehuhn.de/go/sfnt/glyph"
 )
 
 type lineBreakGraph struct {
@@ -31,21 +12,31 @@ type lineBreakGraph struct {
 	rightSkip *glue
 }
 
+type breakNode struct {
+	lineNo         int
+	pos            int
+	prevRelStretch float64
+}
+
 // Edge returns the outgoing edges of the given vertex.
 func (g *lineBreakGraph) Edges(v *breakNode) []int {
 	var res []int
 
-	totalWidth := 0.0
+	totalWidth := g.leftSkip.minWidth() + g.rightSkip.minWidth()
 	glyphsSeen := false
-	for pos := v.pos + 1; pos < len(g.hlist); pos++ {
+	for pos := v.pos + 1; ; pos++ {
+		if pos == len(g.hlist) {
+			res = append(res, pos)
+			break
+		}
 		switch h := g.hlist[pos].(type) {
-		case *glue:
-			if glyphsSeen {
+		case *hModeGlue:
+			if glyphsSeen && !h.NoBreak {
 				res = append(res, pos)
 				glyphsSeen = false
 			}
 			totalWidth += h.Length - h.Minus.Val
-		case *hGlyphs:
+		case *hModeText:
 			glyphsSeen = true
 			totalWidth += h.width
 		default:
@@ -56,13 +47,6 @@ func (g *lineBreakGraph) Edges(v *breakNode) []int {
 		}
 	}
 
-	if totalWidth <= g.textWidth {
-		res = append(res, len(g.hlist))
-	}
-	if len(res) == 0 {
-		panic("no edges found")
-	}
-
 	return res
 }
 
@@ -71,9 +55,9 @@ func (g *lineBreakGraph) getRelStretch(v *breakNode, e int) float64 {
 	width = width.Add(g.leftSkip)
 	for pos := v.pos; pos < e; pos++ {
 		switch h := g.hlist[pos].(type) {
-		case *glue:
-			width = width.Add(h)
-		case *hGlyphs:
+		case *hModeGlue:
+			width = width.Add(&h.glue)
+		case *hModeText:
 			width.Length += h.width
 		default:
 			panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
@@ -97,7 +81,7 @@ func (g *lineBreakGraph) getRelStretch(v *breakNode, e int) float64 {
 	return relStretch
 }
 
-// Length returns the cost of adding a line break at e.
+// Length returns the "cost" of adding a line break at e.
 func (g *lineBreakGraph) Length(v *breakNode, e int) float64 {
 	q := g.getRelStretch(v, e)
 
@@ -128,24 +112,11 @@ func (g *lineBreakGraph) To(v *breakNode, e int) *breakNode {
 
 func discardible(h interface{}) bool {
 	switch h.(type) {
-	case *glue:
+	case *hModeGlue:
 		return true
-	case *hGlyphs:
+	case *hModeText:
 		return false
 	default:
 		panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
 	}
-}
-
-type breakNode struct {
-	lineNo         int
-	pos            int
-	prevRelStretch float64
-}
-
-type hGlyphs struct {
-	glyphs   glyph.Seq
-	font     *font.Font
-	fontSize float64
-	width    float64
 }
