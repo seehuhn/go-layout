@@ -3,13 +3,80 @@ package layout
 import (
 	"fmt"
 	"math"
+
+	"seehuhn.de/go/dijkstra"
 )
 
-type lineBreakGraph struct {
-	hlist     []interface{}
-	textWidth float64
-	leftSkip  *glue
-	rightSkip *glue
+func (e *Engine) EndParagraph() {
+	// TODO(voss): check that no node has infinite shrinkability (since
+	// otherwise the whole paragraph would fit into a single line)
+
+	parFillSkip := &hModeGlue{
+		glue: glue{
+			Plus: stretchAmount{Val: 1, Level: 1},
+		},
+		Text:    "\n",
+		NoBreak: true,
+	}
+	e.hlist = append(e.hlist, parFillSkip)
+
+	findPath := dijkstra.ShortestPathSet[*breakNode, int, float64]
+	start := &breakNode{}
+	e2 := lineBreaker{e}
+	breaks, err := findPath(e2, start, func(v *breakNode) bool {
+		return v.pos == len(e.hlist)
+	})
+	if err != nil {
+		panic(err) // unreachable
+	}
+
+	first := true
+	var prevDepth float64
+
+	curBreak := &breakNode{}
+	for _, pos := range breaks {
+		var lineBoxes []Box
+		if e.leftSkip != nil {
+			leftSkip := glueBox(*e.leftSkip)
+			lineBoxes = append(lineBoxes, &leftSkip)
+		}
+		for _, item := range e.hlist[curBreak.pos:pos] {
+			switch h := item.(type) {
+			case *hModeGlue:
+				glue := glueBox(h.glue)
+				lineBoxes = append(lineBoxes, &glue)
+			case *hModeText:
+				lineBoxes = append(lineBoxes, &TextBox{
+					Font:     h.font,
+					FontSize: h.fontSize,
+					Glyphs:   h.glyphs,
+				})
+			default:
+				panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
+			}
+		}
+		if e.rightSkip != nil {
+			rightSkip := glueBox(*e.rightSkip)
+			lineBoxes = append(lineBoxes, &rightSkip)
+		}
+		line := HBoxTo(e.textWidth, lineBoxes...)
+		ext := line.Extent()
+		if first {
+			first = false
+		} else {
+			gap := ext.Height + prevDepth
+			if gap+0.1 < e.baseLineSkip {
+				e.vlist = append(e.vlist, Kern(e.baseLineSkip-gap))
+			}
+		}
+		prevDepth = ext.Depth
+
+		e.vlist = append(e.vlist, line)
+
+		curBreak = e2.To(curBreak, pos)
+	}
+
+	e.hlist = e.hlist[:0]
 }
 
 type breakNode struct {
@@ -18,8 +85,12 @@ type breakNode struct {
 	prevRelStretch float64
 }
 
+type lineBreaker struct {
+	*Engine
+}
+
 // Edge returns the outgoing edges of the given vertex.
-func (g *lineBreakGraph) Edges(v *breakNode) []int {
+func (g lineBreaker) Edges(v *breakNode) []int {
 	var res []int
 
 	totalWidth := g.leftSkip.minWidth() + g.rightSkip.minWidth()
@@ -50,7 +121,7 @@ func (g *lineBreakGraph) Edges(v *breakNode) []int {
 	return res
 }
 
-func (g *lineBreakGraph) getRelStretch(v *breakNode, e int) float64 {
+func (g *Engine) getRelStretch(v *breakNode, e int) float64 {
 	width := &glue{}
 	width = width.Add(g.leftSkip)
 	for pos := v.pos; pos < e; pos++ {
@@ -82,8 +153,8 @@ func (g *lineBreakGraph) getRelStretch(v *breakNode, e int) float64 {
 }
 
 // Length returns the "cost" of adding a line break at e.
-func (g *lineBreakGraph) Length(v *breakNode, e int) float64 {
-	q := g.getRelStretch(v, e)
+func (e lineBreaker) Length(v *breakNode, pos int) float64 {
+	q := e.getRelStretch(v, pos)
 
 	cost := 0.0
 	if q < -1 {
@@ -98,15 +169,15 @@ func (g *lineBreakGraph) Length(v *breakNode, e int) float64 {
 }
 
 // To returns the endpoint of a edge e starting at vertex v.
-func (g *lineBreakGraph) To(v *breakNode, e int) *breakNode {
-	pos := e
+func (g lineBreaker) To(v *breakNode, pos int) *breakNode {
+	pos0 := pos
 	for pos < len(g.hlist) && discardible(g.hlist[pos]) {
 		pos++
 	}
 	return &breakNode{
 		lineNo:         v.lineNo + 1,
 		pos:            pos,
-		prevRelStretch: g.getRelStretch(v, e),
+		prevRelStretch: g.getRelStretch(v, pos0),
 	}
 }
 

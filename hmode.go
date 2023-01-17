@@ -8,15 +8,22 @@ import (
 	"seehuhn.de/go/sfnt/glyph"
 )
 
-type hModeList struct {
-	// The list of tokens in the horizontal mode.
+type Engine struct {
+	// The list of hlist in the horizontal mode.
 	// Elements can be of the following types:
 	//   *hModeGlue
 	//   *hModeText
-	tokens []interface{}
+	hlist []interface{}
+	vlist []Box
+
+	textWidth float64
+	leftSkip  *glue
+	rightSkip *glue
+
+	baseLineSkip float64
 }
 
-func TokenizeParagraph(par string, F *fontInfo) *hModeList {
+func (e *Engine) TokenizeParagraph(par string, F *fontInfo) {
 	space := F.font.Layout([]rune{' '})
 	var spaceWidth funit.Int
 	if len(space) == 1 && space[0].Gid != 0 {
@@ -43,37 +50,25 @@ func TokenizeParagraph(par string, F *fontInfo) *hModeList {
 		},
 		Text: " ",
 	}
-	parFillSkip := &hModeGlue{
-		glue: glue{
-			Plus: stretchAmount{Val: 1, Level: 1},
-		},
-		Text:    "\n",
-		NoBreak: true,
-	}
 
-	var tokens []interface{}
 	endOfSentence := false
 	for i, f := range strings.Fields(par) {
 		if i > 0 {
 			if endOfSentence {
-				tokens = append(tokens, xSpaceGlue)
+				e.hlist = append(e.hlist, xSpaceGlue)
 				endOfSentence = false
 			} else {
-				tokens = append(tokens, spaceGlue)
+				e.hlist = append(e.hlist, spaceGlue)
 			}
 		}
 		gg := F.font.Typeset(f, F.size)
-		tokens = append(tokens, &hModeText{
+		e.hlist = append(e.hlist, &hModeText{
 			glyphs:   gg,
 			font:     F.font,
 			fontSize: F.size,
 			width:    F.font.ToPDF(F.size, gg.AdvanceWidth()),
 		})
 	}
-	// TODO(voss): add an infinite penalty before the ParFillSkip glue
-	tokens = append(tokens, parFillSkip)
-
-	return &hModeList{tokens: tokens}
 }
 
 type fontInfo struct {
