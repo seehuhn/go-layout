@@ -3,6 +3,7 @@ package layout
 import (
 	"strings"
 
+	"seehuhn.de/go/pdf/color"
 	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/sfnt/funit"
 	"seehuhn.de/go/sfnt/glyph"
@@ -14,28 +15,29 @@ type Engine struct {
 	//   *hModeGlue
 	//   *hModeText
 	hlist []interface{}
-	vlist []Box
 
-	textWidth float64
-	leftSkip  *glue
-	rightSkip *glue
+	VList     []Box
+	PrevDepth float64
 
-	baseLineSkip float64
+	TextWidth    float64
+	LeftSkip     *GlueBox
+	RightSkip    *GlueBox
+	BaseLineSkip float64
 }
 
-func (e *Engine) TokenizeParagraph(par string, F *fontInfo) {
-	space := F.font.Layout([]rune{' '})
+func (e *Engine) AddText(F *FontInfo, par string) {
+	space := F.Font.Layout([]rune{' '})
 	var spaceWidth funit.Int
 	if len(space) == 1 && space[0].Gid != 0 {
 		spaceWidth = funit.Int(space[0].Advance)
 	} else {
 		space = nil
-		spaceWidth = funit.Int(F.font.UnitsPerEm / 4)
+		spaceWidth = funit.Int(F.Font.UnitsPerEm / 4)
 	}
-	pdfSpaceWidth := F.font.ToPDF(F.size, spaceWidth)
+	pdfSpaceWidth := F.Font.ToPDF(F.Size, spaceWidth)
 
 	spaceGlue := &hModeGlue{
-		glue: glue{
+		GlueBox: GlueBox{
 			Length: pdfSpaceWidth,
 			Plus:   stretchAmount{Val: pdfSpaceWidth / 2},
 			Minus:  stretchAmount{Val: pdfSpaceWidth / 3},
@@ -43,7 +45,7 @@ func (e *Engine) TokenizeParagraph(par string, F *fontInfo) {
 		Text: " ",
 	}
 	xSpaceGlue := &hModeGlue{
-		glue: glue{
+		GlueBox: GlueBox{
 			Length: 1.5 * pdfSpaceWidth,
 			Plus:   stretchAmount{Val: pdfSpaceWidth * 1.5},
 			Minus:  stretchAmount{Val: pdfSpaceWidth},
@@ -61,41 +63,40 @@ func (e *Engine) TokenizeParagraph(par string, F *fontInfo) {
 				e.hlist = append(e.hlist, spaceGlue)
 			}
 		}
-		gg := F.font.Typeset(f, F.size)
+		gg := F.Font.Typeset(f, F.Size)
 		e.hlist = append(e.hlist, &hModeText{
-			glyphs:   gg,
-			font:     F.font,
-			fontSize: F.size,
-			width:    F.font.ToPDF(F.size, gg.AdvanceWidth()),
+			F:      F,
+			glyphs: gg,
+			width:  F.Font.ToPDF(F.Size, gg.AdvanceWidth()),
 		})
 	}
 }
 
-type fontInfo struct {
-	font *font.Font
-	size float64
+type FontInfo struct {
+	Font  *font.Font
+	Size  float64
+	Color color.Color
 }
 
 type hModeText struct {
-	glyphs   glyph.Seq
-	font     *font.Font
-	fontSize float64
-	width    float64
+	F      *FontInfo
+	glyphs glyph.Seq
+	width  float64
 }
 
 type hModeGlue struct {
-	glue
+	GlueBox
 	Text    string
 	NoBreak bool
 }
 
-type glue struct {
+type GlueBox struct {
 	Length float64
 	Plus   stretchAmount
 	Minus  stretchAmount
 }
 
-func (g *glue) minWidth() float64 {
+func (g *GlueBox) minWidth() float64 {
 	if g == nil {
 		return 0
 	}

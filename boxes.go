@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"math"
 
-	"seehuhn.de/go/pdf/font"
+	"seehuhn.de/go/pdf/color"
 	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/sfnt/glyph"
 )
@@ -94,24 +94,22 @@ func (obj Kern) Draw(page *graphics.Page, xPos, yPos float64) {}
 // TextBox represents a typeset string of characters as a Box object.
 // The text is typeset using a single font and font size.
 type TextBox struct {
-	Font     *font.Font
-	FontSize float64
-	Glyphs   glyph.Seq
+	F      *FontInfo
+	Glyphs glyph.Seq
 }
 
 // Text returns a new Text object.
-func Text(F *font.Font, ptSize float64, text string) *TextBox {
+func Text(F *FontInfo, text string) *TextBox {
 	return &TextBox{
-		Font:     F,
-		FontSize: ptSize,
-		Glyphs:   F.Typeset(text, ptSize),
+		F:      F,
+		Glyphs: F.Font.Typeset(text, F.Size),
 	}
 }
 
 // Extent implements the Box interface
 func (obj *TextBox) Extent() *BoxExtent {
-	font := obj.Font
-	q := obj.FontSize / float64(font.UnitsPerEm)
+	font := obj.F.Font
+	q := obj.F.Size / float64(font.UnitsPerEm)
 
 	width := 0.0
 	height := math.Inf(-1)
@@ -155,10 +153,15 @@ func (obj *TextBox) Extent() *BoxExtent {
 // Draw implements the Box interface.
 func (obj *TextBox) Draw(page *graphics.Page, xPos, yPos float64) {
 	// TODO(voss): use the code in the graphics package instead.
-	font := obj.Font
+	font := obj.F.Font
 
 	page.BeginText()
-	page.SetFont(font, obj.FontSize)
+	page.SetFont(font, obj.F.Size)
+	if obj.F.Color != nil {
+		page.SetFillColor(obj.F.Color)
+	} else {
+		page.SetFillColor(color.Default)
+	}
 	page.StartLine(xPos, yPos)
 	page.ShowGlyphs(obj.Glyphs)
 	page.EndText()

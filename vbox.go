@@ -17,156 +17,95 @@
 package layout
 
 import (
-	"fmt"
-
 	"seehuhn.de/go/pdf/graphics"
 )
 
-// vBox represents a Box which contains a column of sub-objects.
-type vBox struct {
-	BoxExtent
+// VBox represents a Box which contains a column of sub-objects.
+// The base point is the base point of the last box.
+type VBox []Box
 
-	Contents []Box
-}
-
-// VBox creates a new VBox, where the baseline coincides with the baseline of
-// the last child.
-func (p *Parameters) VBox(children ...Box) Box {
-	return p.vBoxInternal(false, children...)
-}
-
-// VTop creates a new VBox, where the baseline coincides with the baseline of
-// the first child.
-func (p *Parameters) VTop(children ...Box) Box {
-	return p.vBoxInternal(true, children...)
-}
-
-func (p *Parameters) vBoxInternal(top bool, children ...Box) *vBox {
-	vbox := &vBox{}
-	totalHeight := 0.0
-	firstHeight := 0.0
-	lastDepth := 0.0
-	first := true
-	for len(children) > 0 {
-		child := children[0]
-		children = children[1:]
+func (vbox VBox) Extent() *BoxExtent {
+	height := 0.0
+	depth := 0.0
+	width := 0.0
+	for i, child := range vbox {
 		ext := child.Extent()
-
-		if first {
-			firstHeight = ext.Height
+		if !ext.WhiteSpaceOnly && ext.Width > width {
+			width = ext.Width
 		}
 
-		if first || ext.WhiteSpaceOnly {
-			first = ext.WhiteSpaceOnly
+		height += ext.Height
+		if i < len(vbox)-1 {
+			height += ext.Depth
 		} else {
-			gap := lastDepth + ext.Height
-			if gap < p.BaseLineSkip {
-				extra := p.BaseLineSkip - gap
-				vbox.Contents = append(vbox.Contents, Kern(extra))
-				totalHeight += extra
-			}
+			depth = ext.Depth
 		}
-		vbox.Contents = append(vbox.Contents, child)
-		totalHeight += ext.Depth + ext.Height
-
-		if ext.Width > vbox.Width && !ext.WhiteSpaceOnly {
-			vbox.Width = ext.Width
-		}
-
-		lastDepth = ext.Depth
 	}
-	if top {
-		vbox.Height = firstHeight
-		vbox.Depth = totalHeight - firstHeight
-	} else {
-		vbox.Height = totalHeight - lastDepth
-		vbox.Depth = lastDepth
+	return &BoxExtent{
+		Height: height,
+		Depth:  depth,
+		Width:  width,
 	}
-	return vbox
-}
-
-// VBoxTo creates a new VBox with a given total height
-func (p *Parameters) VBoxTo(total float64, children ...Box) Box {
-	vbox := &vBox{}
-	lastDepth := 0.0
-	first := true
-	for len(children) > 0 {
-		child := children[0]
-		children = children[1:]
-		ext := child.Extent()
-
-		if first || ext.WhiteSpaceOnly {
-			first = ext.WhiteSpaceOnly
-		} else {
-			gap := lastDepth + ext.Height
-			if gap < p.BaseLineSkip {
-				extra := p.BaseLineSkip - gap
-				vbox.Contents = append(vbox.Contents, Kern(extra))
-			}
-		}
-		vbox.Contents = append(vbox.Contents, child)
-
-		if ext.Width > vbox.Width && !ext.WhiteSpaceOnly {
-			vbox.Width = ext.Width
-		}
-
-		lastDepth = ext.Depth
-	}
-	vbox.Height = total - lastDepth
-	vbox.Depth = lastDepth
-	return vbox
 }
 
 // Draw implements the Box interface.
-func (obj *vBox) Draw(page *graphics.Page, xPos, yPos float64) {
-	boxTotal := obj.Depth + obj.Height
-	contentsTotal := 0.0
-	for _, child := range obj.Contents {
+func (vbox VBox) Draw(page *graphics.Page, xPos, yPos float64) {
+	for i, child := range vbox {
 		ext := child.Extent()
-		contentsTotal += ext.Depth + ext.Height
-	}
-	if contentsTotal < boxTotal-1e-3 {
-		level := -1
-		var ii []int
-		stretchTotal := 0.0
-		for i, child := range obj.Contents {
-			stretch, ok := child.(stretcher)
-			if !ok {
-				continue
-			}
-			info := stretch.Stretch()
-
-			if info.Level > level {
-				level = info.Level
-				ii = nil
-				stretchTotal = 0
-			}
-			ii = append(ii, i)
-			stretchTotal += info.Val
+		if i > 0 {
+			yPos -= ext.Height
 		}
-
-		if stretchTotal > 0 {
-			q := (boxTotal - contentsTotal) / stretchTotal
-			if level == 0 && q > 1 {
-				q = 1
-			}
-			for _, i := range ii {
-				child := obj.Contents[i]
-				ext := child.Extent()
-				amount := ext.Depth + ext.Height + child.(stretcher).Stretch().Val*q
-				obj.Contents[i] = Kern(amount)
-			}
+		if i < len(vbox)-1 {
+			yPos -= ext.Depth
 		}
-	} else if contentsTotal > boxTotal+1e-3 {
-		fmt.Println("overful vbox")
-		// TODO(voss)
 	}
 
-	y := yPos + obj.Height
-	for _, child := range obj.Contents {
+	for i, child := range vbox {
 		ext := child.Extent()
-		y -= ext.Height
-		child.Draw(page, xPos, y)
-		y -= ext.Depth
+		if i > 0 {
+			yPos -= ext.Height
+		}
+		child.Draw(page, xPos, yPos)
+		yPos -= ext.Depth
+	}
+}
+
+// VTop represents a Box which contains a column of sub-objects.
+// The base point is the base point of the first box.
+type VTop []Box
+
+func (vtop VTop) Extent() *BoxExtent {
+	height := 0.0
+	depth := 0.0
+	width := 0.0
+	for i, child := range vtop {
+		childExt := child.Extent()
+		if !childExt.WhiteSpaceOnly && childExt.Width > width {
+			width = childExt.Width
+		}
+
+		if i == 0 {
+			height = childExt.Height
+		} else {
+			depth += childExt.Height
+		}
+		depth += childExt.Depth
+	}
+	return &BoxExtent{
+		Height: height,
+		Depth:  depth,
+		Width:  width,
+	}
+}
+
+// Draw implements the Box interface.
+func (vtop VTop) Draw(page *graphics.Page, xPos, yPos float64) {
+	for i, child := range vtop {
+		ext := child.Extent()
+		if i > 0 {
+			yPos -= ext.Height
+		}
+		child.Draw(page, xPos, yPos)
+		yPos -= ext.Depth
 	}
 }

@@ -12,7 +12,7 @@ func (e *Engine) EndParagraph() {
 	// otherwise the whole paragraph would fit into a single line)
 
 	parFillSkip := &hModeGlue{
-		glue: glue{
+		GlueBox: GlueBox{
 			Plus: stretchAmount{Val: 1, Level: 1},
 		},
 		Text:    "\n",
@@ -30,48 +30,41 @@ func (e *Engine) EndParagraph() {
 		panic(err) // unreachable
 	}
 
-	first := true
-	var prevDepth float64
-
 	curBreak := &breakNode{}
 	for _, pos := range breaks {
 		var lineBoxes []Box
-		if e.leftSkip != nil {
-			leftSkip := glueBox(*e.leftSkip)
+		if e.LeftSkip != nil {
+			leftSkip := GlueBox(*e.LeftSkip)
 			lineBoxes = append(lineBoxes, &leftSkip)
 		}
 		for _, item := range e.hlist[curBreak.pos:pos] {
 			switch h := item.(type) {
 			case *hModeGlue:
-				glue := glueBox(h.glue)
+				glue := GlueBox(h.GlueBox)
 				lineBoxes = append(lineBoxes, &glue)
 			case *hModeText:
 				lineBoxes = append(lineBoxes, &TextBox{
-					Font:     h.font,
-					FontSize: h.fontSize,
-					Glyphs:   h.glyphs,
+					F:      h.F,
+					Glyphs: h.glyphs,
 				})
 			default:
 				panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
 			}
 		}
-		if e.rightSkip != nil {
-			rightSkip := glueBox(*e.rightSkip)
+		if e.RightSkip != nil {
+			rightSkip := GlueBox(*e.RightSkip)
 			lineBoxes = append(lineBoxes, &rightSkip)
 		}
-		line := HBoxTo(e.textWidth, lineBoxes...)
+		line := HBoxTo(e.TextWidth, lineBoxes...)
 		ext := line.Extent()
-		if first {
-			first = false
-		} else {
-			gap := ext.Height + prevDepth
-			if gap+0.1 < e.baseLineSkip {
-				e.vlist = append(e.vlist, Kern(e.baseLineSkip-gap))
+		if len(e.VList) > 0 {
+			gap := ext.Height + e.PrevDepth
+			if gap+0.1 < e.BaseLineSkip {
+				e.VList = append(e.VList, Kern(e.BaseLineSkip-gap))
 			}
 		}
-		prevDepth = ext.Depth
-
-		e.vlist = append(e.vlist, line)
+		e.VList = append(e.VList, line)
+		e.PrevDepth = ext.Depth
 
 		curBreak = e2.To(curBreak, pos)
 	}
@@ -93,7 +86,7 @@ type lineBreaker struct {
 func (g lineBreaker) Edges(v *breakNode) []int {
 	var res []int
 
-	totalWidth := g.leftSkip.minWidth() + g.rightSkip.minWidth()
+	totalWidth := g.LeftSkip.minWidth() + g.RightSkip.minWidth()
 	glyphsSeen := false
 	for pos := v.pos + 1; ; pos++ {
 		if pos == len(g.hlist) {
@@ -113,7 +106,7 @@ func (g lineBreaker) Edges(v *breakNode) []int {
 		default:
 			panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
 		}
-		if totalWidth > g.textWidth && len(res) > 0 {
+		if totalWidth > g.TextWidth && len(res) > 0 {
 			break
 		}
 	}
@@ -122,21 +115,21 @@ func (g lineBreaker) Edges(v *breakNode) []int {
 }
 
 func (g *Engine) getRelStretch(v *breakNode, e int) float64 {
-	width := &glue{}
-	width = width.Add(g.leftSkip)
+	width := &GlueBox{}
+	width = width.Add(g.LeftSkip)
 	for pos := v.pos; pos < e; pos++ {
 		switch h := g.hlist[pos].(type) {
 		case *hModeGlue:
-			width = width.Add(&h.glue)
+			width = width.Add(&h.GlueBox)
 		case *hModeText:
 			width.Length += h.width
 		default:
 			panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
 		}
 	}
-	width = width.Add(g.rightSkip)
+	width = width.Add(g.RightSkip)
 
-	absStretch := g.textWidth - width.Length
+	absStretch := g.TextWidth - width.Length
 
 	var relStretch float64
 	if absStretch >= 0 {

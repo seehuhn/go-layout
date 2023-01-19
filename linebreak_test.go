@@ -27,13 +27,17 @@ func TestLineBreaks(t *testing.T) {
 	}
 
 	e := &Engine{
-		textWidth:    hSize,
-		rightSkip:    &glue{Plus: stretchAmount{Val: 36, Level: 0}},
-		baseLineSkip: F1.ToPDF16(fontSize, F1.BaseLineSkip),
+		TextWidth:    hSize,
+		RightSkip:    &GlueBox{Plus: stretchAmount{Val: 36, Level: 0}},
+		BaseLineSkip: F1.ToPDF16(fontSize, F1.BaseLineSkip),
 	}
 
-	e.TokenizeParagraph(testText, &fontInfo{F1, 10})
+	e.AddText(&FontInfo{Font: F1, Size: 10}, testText)
 	e.EndParagraph()
+
+	for _, box := range e.VList {
+		t.Logf("%T: %v", box, box)
+	}
 
 	pageTree := pages.InstallTree(out, &pages.InheritableAttributes{
 		MediaBox: pages.A4,
@@ -44,23 +48,7 @@ func TestLineBreaks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pExt := BoxExtent{}
-	for i, box := range e.vlist {
-		ext := box.Extent()
-		if ext.Width > pExt.Width {
-			pExt.Width = ext.Width
-		}
-		if i == 0 {
-			pExt.Height = ext.Height
-			pExt.Depth = ext.Depth
-		} else {
-			pExt.Depth += ext.Height + ext.Depth
-		}
-	}
-	paragraph := &vBox{
-		BoxExtent: pExt,
-		Contents:  e.vlist,
-	}
+	paragraph := VTop(e.VList)
 
 	paragraph.Draw(gr, 72, 25/2.54*72)
 
