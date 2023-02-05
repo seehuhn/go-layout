@@ -32,7 +32,7 @@ func TestLineBreaks(t *testing.T) {
 		BaseLineSkip: F1.ToPDF16(fontSize, F1.BaseLineSkip),
 	}
 
-	e.AddText(&FontInfo{Font: F1, Size: 10}, testText)
+	e.HAddText(&FontInfo{Font: F1, Size: 10}, testText)
 	e.EndParagraph()
 
 	for _, box := range e.VList {

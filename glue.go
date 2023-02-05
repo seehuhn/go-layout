@@ -33,6 +33,47 @@ type stretchAmount struct {
 	Level int
 }
 
+// Glue returns a new "glue" box with the given natural length and
+// stretchability.
+func Glue(length float64, plus float64, plusLevel int, minus float64, minusLevel int) *GlueBox {
+	return &GlueBox{
+		Length: length,
+		Plus:   stretchAmount{plus, plusLevel},
+		Minus:  stretchAmount{minus, minusLevel},
+	}
+}
+
+type GlueBox struct {
+	Length float64
+	Plus   stretchAmount
+	Minus  stretchAmount
+}
+
+func (g *GlueBox) minWidth() float64 {
+	if g == nil {
+		return 0
+	}
+	return g.Length - g.Minus.Val
+}
+
+func (obj *GlueBox) Extent() *BoxExtent {
+	return &BoxExtent{
+		Width:          obj.Length,
+		Height:         obj.Length,
+		WhiteSpaceOnly: true,
+	}
+}
+
+func (obj *GlueBox) Draw(page *graphics.Page, xPos, yPos float64) {}
+
+func (obj *GlueBox) Stretch() *stretchAmount {
+	return &obj.Plus
+}
+
+func (obj *GlueBox) Shrink() *stretchAmount {
+	return &obj.Minus
+}
+
 func (obj *GlueBox) Add(other *GlueBox) *GlueBox {
 	if other == nil {
 		return obj
@@ -61,32 +102,4 @@ func (obj *GlueBox) Add(other *GlueBox) *GlueBox {
 		}
 	}
 	return res
-}
-
-// Glue returns a new "glue" box with the given natural length and
-// stretchability.
-func Glue(length float64, plus float64, plusLevel int, minus float64, minusLevel int) *GlueBox {
-	return &GlueBox{
-		Length: length,
-		Plus:   stretchAmount{plus, plusLevel},
-		Minus:  stretchAmount{minus, minusLevel},
-	}
-}
-
-func (obj *GlueBox) Extent() *BoxExtent {
-	return &BoxExtent{
-		Width:          obj.Length,
-		Height:         obj.Length,
-		WhiteSpaceOnly: true,
-	}
-}
-
-func (obj *GlueBox) Draw(page *graphics.Page, xPos, yPos float64) {}
-
-func (obj *GlueBox) Stretch() *stretchAmount {
-	return &obj.Plus
-}
-
-func (obj *GlueBox) Shrink() *stretchAmount {
-	return &obj.Minus
 }

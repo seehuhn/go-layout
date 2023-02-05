@@ -18,13 +18,13 @@ func (e *Engine) EndParagraph() {
 		Text:    "\n",
 		NoBreak: true,
 	}
-	e.hlist = append(e.hlist, parFillSkip)
+	e.HList = append(e.HList, parFillSkip)
 
 	findPath := dijkstra.ShortestPathSet[*breakNode, int, float64]
 	start := &breakNode{}
 	e2 := lineBreaker{e}
 	breaks, err := findPath(e2, start, func(v *breakNode) bool {
-		return v.pos == len(e.hlist)
+		return v.pos == len(e.HList)
 	})
 	if err != nil {
 		panic(err) // unreachable
@@ -37,7 +37,7 @@ func (e *Engine) EndParagraph() {
 			leftSkip := GlueBox(*e.LeftSkip)
 			lineBoxes = append(lineBoxes, &leftSkip)
 		}
-		for _, item := range e.hlist[curBreak.pos:pos] {
+		for _, item := range e.HList[curBreak.pos:pos] {
 			switch h := item.(type) {
 			case *hModeGlue:
 				glue := GlueBox(h.GlueBox)
@@ -56,20 +56,12 @@ func (e *Engine) EndParagraph() {
 			lineBoxes = append(lineBoxes, &rightSkip)
 		}
 		line := HBoxTo(e.TextWidth, lineBoxes...)
-		ext := line.Extent()
-		if len(e.VList) > 0 {
-			gap := ext.Height + e.PrevDepth
-			if gap+0.1 < e.BaseLineSkip {
-				e.VList = append(e.VList, Kern(e.BaseLineSkip-gap))
-			}
-		}
-		e.VList = append(e.VList, line)
-		e.PrevDepth = ext.Depth
+		e.VAddBox(line)
 
 		curBreak = e2.To(curBreak, pos)
 	}
 
-	e.hlist = e.hlist[:0]
+	e.HList = e.HList[:0]
 }
 
 type breakNode struct {
@@ -89,11 +81,11 @@ func (g lineBreaker) Edges(v *breakNode) []int {
 	totalWidth := g.LeftSkip.minWidth() + g.RightSkip.minWidth()
 	glyphsSeen := false
 	for pos := v.pos + 1; ; pos++ {
-		if pos == len(g.hlist) {
+		if pos == len(g.HList) {
 			res = append(res, pos)
 			break
 		}
-		switch h := g.hlist[pos].(type) {
+		switch h := g.HList[pos].(type) {
 		case *hModeGlue:
 			if glyphsSeen && !h.NoBreak {
 				res = append(res, pos)
@@ -118,7 +110,7 @@ func (g *Engine) getRelStretch(v *breakNode, e int) float64 {
 	width := &GlueBox{}
 	width = width.Add(g.LeftSkip)
 	for pos := v.pos; pos < e; pos++ {
-		switch h := g.hlist[pos].(type) {
+		switch h := g.HList[pos].(type) {
 		case *hModeGlue:
 			width = width.Add(&h.GlueBox)
 		case *hModeText:
@@ -164,7 +156,7 @@ func (e lineBreaker) Length(v *breakNode, pos int) float64 {
 // To returns the endpoint of a edge e starting at vertex v.
 func (g lineBreaker) To(v *breakNode, pos int) *breakNode {
 	pos0 := pos
-	for pos < len(g.hlist) && discardible(g.hlist[pos]) {
+	for pos < len(g.HList) && discardible(g.HList[pos]) {
 		pos++
 	}
 	return &breakNode{

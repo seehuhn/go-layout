@@ -10,22 +10,24 @@ import (
 )
 
 type Engine struct {
-	// The list of hlist in the horizontal mode.
+	// The list of HList in the horizontal mode.
 	// Elements can be of the following types:
 	//   *hModeGlue
 	//   *hModeText
-	hlist []interface{}
+	HList []interface{}
 
 	VList     []Box
 	PrevDepth float64
 
-	TextWidth    float64
-	LeftSkip     *GlueBox
-	RightSkip    *GlueBox
+	TextWidth float64
+	LeftSkip  *GlueBox
+	RightSkip *GlueBox
+
+	TopSkip      float64
 	BaseLineSkip float64
 }
 
-func (e *Engine) AddText(F *FontInfo, par string) {
+func (e *Engine) HAddText(F *FontInfo, par string) {
 	space := F.Font.Layout([]rune{' '})
 	var spaceWidth funit.Int
 	if len(space) == 1 && space[0].Gid != 0 {
@@ -57,19 +59,31 @@ func (e *Engine) AddText(F *FontInfo, par string) {
 	for i, f := range strings.Fields(par) {
 		if i > 0 {
 			if endOfSentence {
-				e.hlist = append(e.hlist, xSpaceGlue)
+				e.HList = append(e.HList, xSpaceGlue)
 				endOfSentence = false
 			} else {
-				e.hlist = append(e.hlist, spaceGlue)
+				e.HList = append(e.HList, spaceGlue)
 			}
 		}
 		gg := F.Font.Typeset(f, F.Size)
-		e.hlist = append(e.hlist, &hModeText{
+		e.HList = append(e.HList, &hModeText{
 			F:      F,
 			glyphs: gg,
 			width:  F.Font.ToPDF(F.Size, gg.AdvanceWidth()),
 		})
 	}
+}
+
+func (e *Engine) VAddBox(b Box) {
+	ext := b.Extent()
+	if len(e.VList) > 0 {
+		gap := ext.Height + e.PrevDepth
+		if gap+0.1 < e.BaseLineSkip {
+			e.VList = append(e.VList, Kern(e.BaseLineSkip-gap))
+		}
+	}
+	e.VList = append(e.VList, b)
+	e.PrevDepth = ext.Depth
 }
 
 type FontInfo struct {
@@ -88,17 +102,4 @@ type hModeGlue struct {
 	GlueBox
 	Text    string
 	NoBreak bool
-}
-
-type GlueBox struct {
-	Length float64
-	Plus   stretchAmount
-	Minus  stretchAmount
-}
-
-func (g *GlueBox) minWidth() float64 {
-	if g == nil {
-		return 0
-	}
-	return g.Length - g.Minus.Val
 }
