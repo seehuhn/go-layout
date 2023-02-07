@@ -28,10 +28,15 @@ type Engine struct {
 	TopSkip      float64
 	BottomGlue   *GlueBox
 	BaseLineSkip float64
+	ParSkip      *GlueBox // TODO(voss)
 
 	InterLinePenalty Penalty
 	ClubPenalty      Penalty
 	WidowPenalty     Penalty
+
+	PageNumber int
+
+	AfterPageFunc func(*Engine, *graphics.Page) error
 }
 
 func (e *Engine) HAddText(F *FontInfo, par string) {

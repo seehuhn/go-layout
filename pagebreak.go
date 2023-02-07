@@ -14,12 +14,21 @@ func (e *Engine) AppendPage(tree *pages.Tree, height float64) error {
 		return nil
 	}
 
+	e.PageNumber++
+
 	page, err := graphics.AppendPage(tree)
 	if err != nil {
 		return nil
 	}
 
 	vbox.Draw(page, 72, 72) // TODO(voss): make the margins configurable
+
+	if e.AfterPageFunc != nil {
+		err = e.AfterPageFunc(e, page)
+		if err != nil {
+			return err
+		}
+	}
 
 	_, err = page.Close()
 	if err != nil {
