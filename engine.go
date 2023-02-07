@@ -1,10 +1,12 @@
 package layout
 
 import (
+	"math"
 	"strings"
 
 	"seehuhn.de/go/pdf/color"
 	"seehuhn.de/go/pdf/font"
+	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/sfnt/funit"
 	"seehuhn.de/go/sfnt/glyph"
 )
@@ -26,6 +28,10 @@ type Engine struct {
 	TopSkip      float64
 	BottomGlue   *GlueBox
 	BaseLineSkip float64
+
+	InterLinePenalty Penalty
+	ClubPenalty      Penalty
+	WidowPenalty     Penalty
 }
 
 func (e *Engine) HAddText(F *FontInfo, par string) {
@@ -79,7 +85,7 @@ func (e *Engine) VAddBox(b Box) {
 	ext := b.Extent()
 	if len(e.VList) > 0 {
 		gap := ext.Height + e.PrevDepth
-		if gap+0.1 < e.BaseLineSkip {
+		if gap+0.001 < e.BaseLineSkip {
 			e.VList = append(e.VList, Kern(e.BaseLineSkip-gap))
 		}
 	}
@@ -104,3 +110,20 @@ type hModeGlue struct {
 	Text    string
 	NoBreak bool
 }
+
+type Penalty float64
+
+func (obj Penalty) Extent() *BoxExtent {
+	return &BoxExtent{
+		WhiteSpaceOnly: true,
+	}
+}
+
+func (obj Penalty) Draw(page *graphics.Page, xPos, yPos float64) {
+	// pass
+}
+
+const (
+	PenaltyPreventBreak Penalty = -math.MaxFloat64
+	PenaltyForceBreak   Penalty = math.MaxFloat64
+)

@@ -31,19 +31,20 @@ func (e *Engine) EndParagraph() {
 	}
 
 	curBreak := &breakNode{}
-	for _, pos := range breaks {
-		var lineBoxes []Box
+	for i, pos := range breaks {
+		var currentLine []Box
 		if e.LeftSkip != nil {
-			leftSkip := GlueBox(*e.LeftSkip)
-			lineBoxes = append(lineBoxes, &leftSkip)
+			// TODO(voss): why do we copy LeftSkip here?
+			leftSkipCopy := GlueBox(*e.LeftSkip)
+			currentLine = append(currentLine, &leftSkipCopy)
 		}
 		for _, item := range e.HList[curBreak.pos:pos] {
 			switch h := item.(type) {
 			case *hModeGlue:
 				glue := GlueBox(h.GlueBox)
-				lineBoxes = append(lineBoxes, &glue)
+				currentLine = append(currentLine, &glue)
 			case *hModeText:
-				lineBoxes = append(lineBoxes, &TextBox{
+				currentLine = append(currentLine, &TextBox{
 					F:      h.F,
 					Glyphs: h.glyphs,
 				})
@@ -52,11 +53,24 @@ func (e *Engine) EndParagraph() {
 			}
 		}
 		if e.RightSkip != nil {
+			// TODO(voss): why do we copy RightSkip here?
 			rightSkip := GlueBox(*e.RightSkip)
-			lineBoxes = append(lineBoxes, &rightSkip)
+			currentLine = append(currentLine, &rightSkip)
 		}
-		line := HBoxTo(e.TextWidth, lineBoxes...)
-		e.VAddBox(line)
+
+		if i > 0 {
+			penalty := e.InterLinePenalty
+			if i == 1 {
+				penalty += e.ClubPenalty
+			}
+			if i == len(breaks)-1 {
+				penalty += e.WidowPenalty
+			}
+			e.VList = append(e.VList, penalty)
+		}
+
+		lineBox := HBoxTo(e.TextWidth, currentLine...)
+		e.VAddBox(lineBox)
 
 		curBreak = e2.To(curBreak, pos)
 	}
@@ -158,7 +172,7 @@ func (e lineBreaker) Length(v *breakNode, pos int) float64 {
 // To returns the endpoint of a edge e starting at vertex v.
 func (g lineBreaker) To(v *breakNode, pos int) *breakNode {
 	pos0 := pos
-	for pos < len(g.HList) && discardible(g.HList[pos]) {
+	for pos < len(g.HList) && hDiscardible(g.HList[pos]) {
 		pos++
 	}
 	return &breakNode{
@@ -168,7 +182,7 @@ func (g lineBreaker) To(v *breakNode, pos int) *breakNode {
 	}
 }
 
-func discardible(h interface{}) bool {
+func hDiscardible(h interface{}) bool {
 	switch h.(type) {
 	case *hModeGlue:
 		return true

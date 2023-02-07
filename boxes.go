@@ -189,8 +189,3 @@ func Raise(delta float64, box Box) Box {
 		delta: delta,
 	}
 }
-
-// Parameters contains the parameter values used by the layout engine.
-type Parameters struct {
-	BaseLineSkip float64
-}
