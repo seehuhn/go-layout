@@ -24,6 +24,7 @@ type Engine struct {
 	RightSkip *GlueBox
 
 	TopSkip      float64
+	BottomGlue   *GlueBox
 	BaseLineSkip float64
 }
 

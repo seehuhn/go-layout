@@ -109,3 +109,69 @@ func (vtop VTop) Draw(page *graphics.Page, xPos, yPos float64) {
 		yPos -= ext.Depth
 	}
 }
+
+type vBox2 struct {
+	BoxExtent
+
+	Contents []Box
+}
+
+// VBox2To creates a VBox2 with the given height.
+func VBox2To(height float64, contents ...Box) Box {
+	res := &vBox2{
+		BoxExtent: BoxExtent{
+			Height: height,
+		},
+		Contents: contents,
+	}
+	if len(contents) > 0 {
+		res.Depth = contents[len(contents)-1].Extent().Depth
+	}
+	for _, box := range contents {
+		ext := box.Extent()
+		if ext.Width > res.Width && !ext.WhiteSpaceOnly {
+			res.Width = ext.Width
+		}
+	}
+	return res
+}
+
+func (obj *vBox2) Draw(page *graphics.Page, xPos, yPos float64) {
+	total := equivalentHeightGlue(obj.Contents)
+	extraSpace := obj.Height - total.Length
+	y := yPos + obj.Height
+	if extraSpace >= 0 {
+		q := extraSpace / total.Plus.Val
+		for _, box := range obj.Contents {
+			if s, isStretcher := box.(stretcher); isStretcher {
+				stretch := s.Stretch()
+				if stretch.Level == total.Plus.Level {
+					y -= stretch.Val * q
+				}
+			}
+			ext := box.Extent()
+			y -= ext.Height
+			box.Draw(page, xPos, y)
+			y -= ext.Depth
+		}
+	} else {
+		q := -extraSpace / total.Minus.Val
+		if total.Minus.Level == 0 && q > 1 {
+			// glue can't shrink beyond its minimum width
+			q = 1
+		}
+		for _, box := range obj.Contents {
+			if s, isShrinker := box.(shrinker); isShrinker {
+				shrink := s.Shrink()
+				if shrink.Level == total.Minus.Level {
+					y -= shrink.Val * q
+					continue
+				}
+			}
+			ext := box.Extent()
+			y -= ext.Height
+			box.Draw(page, xPos, y)
+			y -= ext.Depth
+		}
+	}
+}

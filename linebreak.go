@@ -78,7 +78,7 @@ type lineBreaker struct {
 func (g lineBreaker) Edges(v *breakNode) []int {
 	var res []int
 
-	totalWidth := g.LeftSkip.minWidth() + g.RightSkip.minWidth()
+	totalWidth := g.LeftSkip.minLength() + g.RightSkip.minLength()
 	glyphsSeen := false
 	for pos := v.pos + 1; ; pos++ {
 		if pos == len(g.HList) {
@@ -108,21 +108,23 @@ func (g lineBreaker) Edges(v *breakNode) []int {
 
 func (g *Engine) getRelStretch(v *breakNode, e int) float64 {
 	width := &GlueBox{}
-	width = width.Add(g.LeftSkip)
+	width.Add(g.LeftSkip)
 	for pos := v.pos; pos < e; pos++ {
 		switch h := g.HList[pos].(type) {
 		case *hModeGlue:
-			width = width.Add(&h.GlueBox)
+			width.Add(&h.GlueBox)
 		case *hModeText:
 			width.Length += h.width
 		default:
 			panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
 		}
 	}
-	width = width.Add(g.RightSkip)
+	width.Add(g.RightSkip)
 
 	absStretch := g.TextWidth - width.Length
 
+	// TODO(voss): What happens for "A \hfill B \hfill C"?
+	// Maybe use absolute stretchability instead of relative stretchability?
 	var relStretch float64
 	if absStretch >= 0 {
 		if width.Plus.Level == 0 {

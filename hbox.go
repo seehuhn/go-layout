@@ -52,34 +52,35 @@ func HBox(children ...Box) Box {
 }
 
 // HBoxTo creates a new HBox with the given width
-func HBoxTo(total float64, boxes ...Box) Box {
-	hbox := &hBox{
+func HBoxTo(width float64, contents ...Box) Box {
+	res := &hBox{
 		BoxExtent: BoxExtent{
-			Width:  total,
+			Width:  width,
 			Height: math.Inf(-1),
 			Depth:  math.Inf(-1),
 		},
-		Contents: boxes,
+		Contents: contents,
 	}
-	for _, box := range boxes {
+	for _, box := range contents {
 		ext := box.Extent()
-		if ext.Height > hbox.Height && !ext.WhiteSpaceOnly {
-			hbox.Height = ext.Height
+		if ext.Height > res.Height && !ext.WhiteSpaceOnly {
+			res.Height = ext.Height
 		}
-		if ext.Depth > hbox.Depth && !ext.WhiteSpaceOnly {
-			hbox.Depth = ext.Depth
+		if ext.Depth > res.Depth && !ext.WhiteSpaceOnly {
+			res.Depth = ext.Depth
 		}
 	}
-	return hbox
+	return res
 }
 
-func (obj *hBox) stretchTo(boxTotal float64) {
-	contentsTotal := 0.0
+func (obj *hBox) stretchTo(width float64) {
+	naturalWidth := 0.0
 	for _, child := range obj.Contents {
 		ext := child.Extent()
-		contentsTotal += ext.Width
+		naturalWidth += ext.Width
 	}
-	if contentsTotal < boxTotal-1e-3 {
+
+	if naturalWidth < width-1e-3 {
 		level := -1
 		var ii []int
 		stretchTotal := 0.0
@@ -100,7 +101,7 @@ func (obj *hBox) stretchTo(boxTotal float64) {
 		}
 
 		if stretchTotal > 0 {
-			q := (boxTotal - contentsTotal) / stretchTotal
+			q := (width - naturalWidth) / stretchTotal
 			if level == 0 && q > 1 {
 				// glue can't shrink beyond its minimum width
 				q = 1
@@ -112,7 +113,7 @@ func (obj *hBox) stretchTo(boxTotal float64) {
 				obj.Contents[i] = Kern(amount)
 			}
 		}
-	} else if contentsTotal > boxTotal+1e-3 {
+	} else if naturalWidth > width+1e-3 {
 		level := -1
 		var ii []int
 		shrinkTotal := 0.0
@@ -133,7 +134,7 @@ func (obj *hBox) stretchTo(boxTotal float64) {
 		}
 
 		if shrinkTotal > 0 {
-			q := (contentsTotal - boxTotal) / shrinkTotal
+			q := (naturalWidth - width) / shrinkTotal
 			// glue can stretch beyond its natural width, if needed
 			for _, i := range ii {
 				child := obj.Contents[i]

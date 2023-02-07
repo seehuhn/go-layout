@@ -152,7 +152,6 @@ func (obj *TextBox) Extent() *BoxExtent {
 
 // Draw implements the Box interface.
 func (obj *TextBox) Draw(page *graphics.Page, xPos, yPos float64) {
-	// TODO(voss): use the code in the graphics package instead.
 	font := obj.F.Font
 
 	page.BeginText()
