@@ -145,7 +145,7 @@ func (obj *vBox2) Draw(page *graphics.Page, xPos, yPos float64) {
 		for _, box := range obj.Contents {
 			if s, isStretcher := box.(stretcher); isStretcher {
 				stretch := s.Stretch()
-				if stretch.Level == total.Plus.Level {
+				if stretch.Order == total.Plus.Order {
 					y -= stretch.Val * q
 				}
 			}
@@ -156,14 +156,14 @@ func (obj *vBox2) Draw(page *graphics.Page, xPos, yPos float64) {
 		}
 	} else {
 		q := -extraSpace / total.Minus.Val
-		if total.Minus.Level == 0 && q > 1 {
+		if total.Minus.Order == 0 && q > 1 {
 			// glue can't shrink beyond its minimum width
 			q = 1
 		}
 		for _, box := range obj.Contents {
 			if s, isShrinker := box.(shrinker); isShrinker {
 				shrink := s.Shrink()
-				if shrink.Level == total.Minus.Level {
+				if shrink.Order == total.Minus.Order {
 					y -= shrink.Val * q
 					continue
 				}

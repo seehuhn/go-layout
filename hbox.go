@@ -91,8 +91,8 @@ func (obj *hBox) stretchTo(width float64) {
 			}
 			info := stretch.Stretch()
 
-			if info.Level > level {
-				level = info.Level
+			if info.Order > level {
+				level = info.Order
 				ii = nil
 				stretchTotal = 0
 			}
@@ -124,8 +124,8 @@ func (obj *hBox) stretchTo(width float64) {
 			}
 			info := shrink.Shrink()
 
-			if info.Level > level {
-				level = info.Level
+			if info.Order > level {
+				level = info.Order
 				ii = nil
 				shrinkTotal = 0
 			}

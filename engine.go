@@ -128,7 +128,7 @@ func (obj Penalty) Draw(page *graphics.Page, xPos, yPos float64) {
 	// pass
 }
 
-const (
-	PenaltyPreventBreak Penalty = -math.MaxFloat64
-	PenaltyForceBreak   Penalty = math.MaxFloat64
+var (
+	PenaltyPreventBreak = Penalty(math.Inf(+1))
+	PenaltyForceBreak   = Penalty(math.Inf(-1))
 )

@@ -32,14 +32,14 @@ type shrinker interface {
 
 type stretchAmount struct {
 	Val   float64
-	Level int
+	Order int
 }
 
 func (s *stretchAmount) Add(other stretchAmount) {
-	if other.Level > s.Level {
+	if other.Order > s.Order {
 		s.Val = other.Val
-		s.Level = other.Level
-	} else if other.Level == s.Level {
+		s.Order = other.Order
+	} else if other.Order == s.Order {
 		s.Val += other.Val
 	}
 }
@@ -64,7 +64,7 @@ func (g *GlueBox) minLength() float64 {
 	if g == nil {
 		return 0
 	}
-	if g.Minus.Level > 0 {
+	if g.Minus.Order > 0 {
 		return math.Inf(-1)
 	}
 	return g.Length - g.Minus.Val
@@ -74,7 +74,7 @@ func (g *GlueBox) maxLength() float64 {
 	if g == nil {
 		return 0
 	}
-	if g.Plus.Level > 0 {
+	if g.Plus.Order > 0 {
 		return math.Inf(+1)
 	}
 	return g.Length + g.Plus.Val

@@ -11,9 +11,13 @@ func (e *Engine) EndParagraph() {
 	// TODO(voss): check that no node has infinite shrinkability (since
 	// otherwise the whole paragraph would fit into a single line)
 
+	if len(e.VList) > 0 && e.ParSkip != nil {
+		e.VList = append(e.VList, e.ParSkip)
+	}
+
 	parFillSkip := &hModeGlue{
 		GlueBox: GlueBox{
-			Plus: stretchAmount{Val: 1, Level: 1},
+			Plus: stretchAmount{Val: 1, Order: 1},
 		},
 		Text:    "\n",
 		NoBreak: true,
@@ -34,9 +38,7 @@ func (e *Engine) EndParagraph() {
 	for i, pos := range breaks {
 		var currentLine []Box
 		if e.LeftSkip != nil {
-			// TODO(voss): why do we copy LeftSkip here?
-			leftSkipCopy := GlueBox(*e.LeftSkip)
-			currentLine = append(currentLine, &leftSkipCopy)
+			currentLine = append(currentLine, e.LeftSkip)
 		}
 		for _, item := range e.HList[curBreak.pos:pos] {
 			switch h := item.(type) {
@@ -53,9 +55,7 @@ func (e *Engine) EndParagraph() {
 			}
 		}
 		if e.RightSkip != nil {
-			// TODO(voss): why do we copy RightSkip here?
-			rightSkip := GlueBox(*e.RightSkip)
-			currentLine = append(currentLine, &rightSkip)
+			currentLine = append(currentLine, e.RightSkip)
 		}
 
 		if i > 0 {
@@ -141,11 +141,11 @@ func (g *Engine) getRelStretch(v *breakNode, e int) float64 {
 	// Maybe use absolute stretchability instead of relative stretchability?
 	var relStretch float64
 	if absStretch >= 0 {
-		if width.Plus.Level == 0 {
+		if width.Plus.Order == 0 {
 			relStretch = absStretch / width.Plus.Val
 		}
 	} else {
-		if width.Minus.Level > 0 {
+		if width.Minus.Order > 0 {
 			panic("infinite shrinkage")
 		}
 		relStretch = absStretch / width.Minus.Val

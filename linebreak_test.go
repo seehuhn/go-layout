@@ -28,7 +28,7 @@ func TestLineBreaks(t *testing.T) {
 
 	e := &Engine{
 		TextWidth:    hSize,
-		RightSkip:    &GlueBox{Plus: stretchAmount{Val: 36, Level: 0}},
+		RightSkip:    &GlueBox{Plus: stretchAmount{Val: 36, Order: 0}},
 		BaseLineSkip: F1.ToPDF16(fontSize, F1.BaseLineSkip),
 	}
 
