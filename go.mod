@@ -9,4 +9,4 @@ require (
 	seehuhn.de/go/sfnt v0.0.0-20230114212117-2a6a867c02d9
 )
 
-require golang.org/x/exp v0.0.0-20230111222715-75897c7a292a // indirect
+require golang.org/x/exp v0.0.0-20230118134722-a68e582fa157 // indirect

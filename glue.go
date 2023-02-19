@@ -124,7 +124,7 @@ func equivalentHeightGlue(boxes []Box) *GlueBox {
 		res.addBoxHeightAndDepth(box)
 	}
 	if len(boxes) > 0 {
-		ext := boxes[0].Extent()
+		ext := boxes[len(boxes)-1].Extent()
 		res.Length -= ext.Depth
 	}
 	return res
