@@ -2,9 +2,8 @@ package layout
 
 import (
 	"fmt"
-	"math"
 
-	"seehuhn.de/go/dijkstra"
+	"seehuhn.de/go/dag"
 )
 
 func (e *Engine) EndParagraph() {
@@ -24,12 +23,15 @@ func (e *Engine) EndParagraph() {
 	}
 	e.HList = append(e.HList, parFillSkip)
 
-	findPath := dijkstra.ShortestPathSet[*breakNode, int, float64]
-	start := &breakNode{}
+	findPath := dag.ShortestPathDyn[*breakNode, int, float64]
 	e2 := lineBreaker{e}
-	breaks, err := findPath(e2, start, func(v *breakNode) bool {
-		return v.pos == len(e.HList)
-	})
+	start := &breakNode{}
+	end := &breakNode{
+		pos:         len(e.HList),
+		lineNo:      0,
+		prevBadness: -100,
+	}
+	breaks, err := findPath(e2, start, end)
 	if err != nil {
 		panic(err) // unreachable
 	}
@@ -95,13 +97,12 @@ func (g *Engine) getRelStretch(v *breakNode, e int) float64 {
 
 	absStretch := g.TextWidth - width.Length
 
-	// TODO(voss): What happens for "A \hfill B \hfill C"?
-	// Maybe use absolute stretchability instead of relative stretchability?
 	var relStretch float64
 	if absStretch >= 0 {
-		if width.Plus.Order == 0 {
-			relStretch = absStretch / width.Plus.Val
+		if width.Plus.Order > 0 {
+			absStretch = g.TextWidth
 		}
+		relStretch = absStretch / width.Plus.Val
 	} else {
 		if width.Minus.Order > 0 {
 			panic("infinite shrinkage")
@@ -111,10 +112,42 @@ func (g *Engine) getRelStretch(v *breakNode, e int) float64 {
 	return relStretch
 }
 
+type badnessClass int
+
+const (
+	badnessVeryLoose badnessClass = 2
+	badnessLoose     badnessClass = 1
+	badnessDecent    badnessClass = 0
+	badnessTight     badnessClass = -1
+)
+
+func getBadnessClass(relStretch float64) badnessClass {
+	switch {
+	case relStretch >= 1:
+		return badnessVeryLoose
+	case relStretch >= 0.5:
+		return badnessLoose
+	case relStretch > -0.5:
+		return badnessDecent
+	default:
+		return badnessTight
+	}
+}
+
 type breakNode struct {
-	pos            int
-	lineNo         int
-	prevRelStretch float64
+	pos         int
+	lineNo      int
+	prevBadness badnessClass
+}
+
+func (v *breakNode) Before(other *breakNode) bool {
+	if v.pos != other.pos {
+		return v.pos < other.pos
+	}
+	if v.lineNo != other.lineNo {
+		return v.lineNo < other.lineNo
+	}
+	return v.prevBadness < other.prevBadness
 }
 
 type lineBreaker struct {
@@ -161,10 +194,18 @@ func (e lineBreaker) Length(v *breakNode, pos int) float64 {
 	} else {
 		cost += 100 * q * q
 	}
-	if v.lineNo > 0 && math.Abs(q-v.prevRelStretch) > 0.1 {
+	thisBadness := getBadnessClass(q)
+	if v.lineNo > 0 && abs(thisBadness-v.prevBadness) > 1 {
 		cost += 10
 	}
 	return cost * cost
+}
+
+func abs(x badnessClass) badnessClass {
+	if x < 0 {
+		return -x
+	}
+	return x
 }
 
 // To returns the endpoint of a edge e starting at vertex v.
@@ -174,9 +215,9 @@ func (g lineBreaker) To(v *breakNode, pos int) *breakNode {
 		pos++
 	}
 	return &breakNode{
-		lineNo:         v.lineNo + 1,
-		pos:            pos,
-		prevRelStretch: g.getRelStretch(v, pos0),
+		lineNo:      v.lineNo + 1,
+		pos:         pos,
+		prevBadness: getBadnessClass(g.getRelStretch(v, pos0)),
 	}
 }
 
