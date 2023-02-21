@@ -325,6 +325,10 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float
 	return nil
 }
 
+func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) {
+	panic("not implemented")
+}
+
 func format(x float64) string {
 	xInt := int(math.Round(x))
 	if math.Abs(x-float64(xInt)) < 1e-6 {

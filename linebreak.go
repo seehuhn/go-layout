@@ -14,6 +14,7 @@ func (e *Engine) EndParagraph() {
 		e.VList = append(e.VList, e.ParSkip)
 	}
 
+	// TODO(voss): make this configurable
 	parFillSkip := &hModeGlue{
 		GlueBox: GlueBox{
 			Plus: stretchAmount{Val: 1, Order: 1},
