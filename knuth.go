@@ -11,44 +11,42 @@ type knuthPlassLineBreaker struct {
 	α float64 // extra demerits for consecutive flagged breaks
 	γ float64 // extra demerits for badness classes that are more than 1 apart
 	ρ float64 // upper bound on the adjustment ratios
-	q int     // looseness parameter
+	q int     // looseness parameter (try to in-/decrease number of lines by q)
 
 	lineWidth func(lineNo int) float64
 
 	hList []interface{}
 
-	active []*knuthNode
+	active []*knuthPlassNode
 	total  *GlueBox
 }
 
-type knuthNode struct {
+type knuthPlassNode struct {
 	pos           int
 	line          int
 	fitness       fitnessClass
 	total         *GlueBox
 	totalDemerits float64
-	previous      *knuthNode
+	previous      *knuthPlassNode
 }
 
 func (br *knuthPlassLineBreaker) Run() []int {
-	br.active = append(br.active[:0], &knuthNode{
-		total: &GlueBox{},
-	})
+	start := &knuthPlassNode{total: &GlueBox{}}
+	br.active = append(br.active[:0], start)
 	br.total = &GlueBox{}
 
-	var feasibleBreaks []int
 	for b := 0; b < len(br.hList); b++ {
 		if br.IsValidBreakpoint(b) {
-			feasibleBreaks = feasibleBreaks[:0]
-
 			pb := br.Penalty(b)
 
 			aIdx := 0
 			for aIdx < len(br.active) { // loop over all line numbers
-				var Ac [4]*knuthNode
+				var Ac [4]*knuthPlassNode
 				Dc := [4]float64{math.Inf(+1), math.Inf(+1), math.Inf(+1), math.Inf(+1)}
 				D := math.Inf(+1)
-				for { // loop over all nodes for a given line number
+
+				// loop over all active nodes which share the same line number
+				for {
 					a := br.active[aIdx]
 
 					r := br.AdjustmentRatio(a, b)
@@ -100,7 +98,7 @@ func (br *knuthPlassLineBreaker) Run() []int {
 						if Dc[c+1] > D+br.γ {
 							continue
 						}
-						s := &knuthNode{
+						s := &knuthPlassNode{
 							pos:           b,
 							line:          Ac[c+1].line + 1,
 							fitness:       c,
@@ -161,7 +159,7 @@ func (br *knuthPlassLineBreaker) Run() []int {
 	return breaks
 }
 
-func (br *knuthPlassLineBreaker) computeDemerits(r float64, pb float64, a *knuthNode, b int, c fitnessClass) float64 {
+func (br *knuthPlassLineBreaker) computeDemerits(r float64, pb float64, a *knuthPlassNode, b int, c fitnessClass) float64 {
 	var d float64
 	r3 := 1 + 100*math.Pow(math.Abs(r), 3)
 	if pb >= 0 {
@@ -206,7 +204,7 @@ func (br *knuthPlassLineBreaker) IsFlagged(pos int) bool {
 	return false
 }
 
-func (br *knuthPlassLineBreaker) AdjustmentRatio(a *knuthNode, b int) float64 {
+func (br *knuthPlassLineBreaker) AdjustmentRatio(a *knuthPlassNode, b int) float64 {
 	L := br.total.Length - a.total.Length
 	if p, isPenalty := br.hList[b].(*hModePenalty); isPenalty {
 		L += p.width

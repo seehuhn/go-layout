@@ -4,8 +4,8 @@ golang.org/x/exp v0.0.0-20230118134722-a68e582fa157/go.mod h1:CxIveKay+FTh1D0yPZ
 golang.org/x/image v0.3.0 h1:HTDXbdK9bjfSWkPzDJIw89W8CAtfFGduujWs33NLLsg=
 golang.org/x/text v0.6.0 h1:3XmdazWV+ubf7QgHSTWeykHOci5oeekaGJBLkrkaw4k=
 golang.org/x/text v0.6.0/go.mod h1:mrYo+phRRbMaCq/xk9113O4dZlRixOauAjOtrjsXDZ8=
-seehuhn.de/go/dag v0.0.0-20230217151937-aec859152b2f h1:uNfBn4sdNP5KNbRhUUTuRJLFnpHtIOUZy9ls7z1xLuE=
 seehuhn.de/go/dijkstra v0.9.3 h1:uVbFjlAuhlwV45qM7S4Wz+C7XlfbgAaTfcZX1r8OgIA=
+seehuhn.de/go/dijkstra v0.9.3/go.mod h1:YcrFNNQ1BIVFI0xIYnNa/StiSKQXuQIID8zgZjwAOFE=
 seehuhn.de/go/pdf v0.0.0-20230116151338-80f996d63b00 h1:QNuGWj1aS0kXu1oe6UwxKbz2/wtC7Ag5+WnZaAxMc/I=
 seehuhn.de/go/pdf v0.0.0-20230116151338-80f996d63b00/go.mod h1:BRxTMSWrDMk0jKXczT4JV0RnLqxNp5/j2rBYoer3wJs=
 seehuhn.de/go/sfnt v0.0.0-20230114212117-2a6a867c02d9 h1:/i6GUNVq7N5JMbg1Is30XgnAVBTYiOTPbiJhd6ouUsk=

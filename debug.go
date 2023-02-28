@@ -5,7 +5,6 @@ import (
 	"math"
 	"strings"
 
-	"seehuhn.de/go/dag"
 	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/color"
 	"seehuhn.de/go/pdf/font"
@@ -351,33 +350,29 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 	}
 	hList = append(hList, &hModePenalty{Penalty: PenaltyForceBreak})
 
-	e2 := lineBreaker{
-		Engine:        e,
-		hModeMaterial: hList,
+	br := &knuthPlassLineBreaker{
+		α: 100,
+		γ: 100,
+		ρ: 1000,
+		q: 0,
+		lineWidth: func(lineNo int) float64 {
+			return e.TextWidth
+		},
+		hList: hList,
 	}
-	start := &breakNode{}
-	end := &breakNode{
-		pos:         len(hList),
-		lineNo:      0,
-		prevBadness: math.MinInt,
-	}
-	findPath := dag.ShortestPathDyn[*breakNode, int, float64]
-	breaks, err := findPath(e2, start, end)
-	if err != nil {
-		panic(err) // unreachable
-	}
+	breaks := br.Run()
 
 	var lineBoxes []Box
 	var badness []fitnessClass
 	var endIdx []int
 
-	curBreak := &breakNode{}
+	prevPos := 0
 	for _, pos := range breaks {
 		var currentLine []Box
 		if e.LeftSkip != nil {
 			currentLine = append(currentLine, e.LeftSkip)
 		}
-		for _, item := range hList[curBreak.pos:pos] {
+		for _, item := range hList[prevPos:pos] {
 			switch h := item.(type) {
 			case *hModeGlue:
 				currentLine = append(currentLine, &h.GlueBox)
@@ -393,11 +388,21 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 			currentLine = append(currentLine, e.RightSkip)
 		}
 
-		curBreak = e2.To(curBreak, pos)
+	skipDiscardible:
+		for prevPos = pos; prevPos < len(hList); prevPos++ {
+			switch h := br.hList[prevPos].(type) {
+			case *hModeBox:
+				break skipDiscardible
+			case *hModePenalty:
+				if prevPos > pos && h.Penalty == PenaltyForceBreak {
+					break skipDiscardible
+				}
+			}
+		}
 
 		lineBox := HBoxTo(e.TextWidth, currentLine...)
 		lineBoxes = append(lineBoxes, lineBox)
-		badness = append(badness, curBreak.prevBadness)
+		badness = append(badness, 0) // TODO(voss)
 		endIdx = append(endIdx, pos)
 	}
 
