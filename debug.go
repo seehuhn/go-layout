@@ -5,6 +5,7 @@ import (
 	"math"
 	"strings"
 
+	"seehuhn.de/go/dag"
 	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/color"
 	"seehuhn.de/go/pdf/font"
@@ -325,8 +326,178 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float
 	return nil
 }
 
-func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) {
-	panic("not implemented")
+func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
+	// This must match the code in [Engine.EndParagraph]
+
+	const (
+		bottomMargin = 36
+		leftMargin   = 48
+		topMargin    = 36
+		rigthMargin  = 240
+	)
+	var (
+		// geomColor  = color.RGB(0, 0, 0.9)
+		// breakColor = color.RGB(0.9, 0, 0)
+		annotationColor = color.RGB(0, 0.8, 0)
+	)
+
+	hList := e.HList
+	if e.ParFillSkip != nil {
+		parFillSkip := &hModeGlue{
+			GlueBox: *e.ParFillSkip,
+			Text:    "\n",
+		}
+		hList = append(e.HList, parFillSkip)
+	}
+	hList = append(hList, &hModePenalty{Penalty: PenaltyForceBreak})
+
+	e2 := lineBreaker{
+		Engine:        e,
+		hModeMaterial: hList,
+	}
+	start := &breakNode{}
+	end := &breakNode{
+		pos:         len(hList),
+		lineNo:      0,
+		prevBadness: math.MinInt,
+	}
+	findPath := dag.ShortestPathDyn[*breakNode, int, float64]
+	breaks, err := findPath(e2, start, end)
+	if err != nil {
+		panic(err) // unreachable
+	}
+
+	var lineBoxes []Box
+	var badness []fitnessClass
+	var endIdx []int
+
+	curBreak := &breakNode{}
+	for _, pos := range breaks {
+		var currentLine []Box
+		if e.LeftSkip != nil {
+			currentLine = append(currentLine, e.LeftSkip)
+		}
+		for _, item := range hList[curBreak.pos:pos] {
+			switch h := item.(type) {
+			case *hModeGlue:
+				currentLine = append(currentLine, &h.GlueBox)
+			case *hModeBox:
+				currentLine = append(currentLine, h.Box)
+			case *hModePenalty:
+				// TODO(voss)
+			default:
+				panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
+			}
+		}
+		if e.RightSkip != nil {
+			currentLine = append(currentLine, e.RightSkip)
+		}
+
+		curBreak = e2.To(curBreak, pos)
+
+		lineBox := HBoxTo(e.TextWidth, currentLine...)
+		lineBoxes = append(lineBoxes, lineBox)
+		badness = append(badness, curBreak.prevBadness)
+		endIdx = append(endIdx, pos)
+	}
+
+	// Now we have gathered all the lines.
+	// Create a page which shows the line breaks.
+
+	page, err := graphics.NewPage(tree.Out)
+	if err != nil {
+		return err
+	}
+	page.AddExtGState("gs:t", pdf.Dict{
+		"ca": pdf.Real(0.75), // fill alpha
+	})
+
+	visualHeight := 0.0
+	for _, box := range lineBoxes {
+		ext := box.Extent()
+		visualHeight += ext.Depth + ext.Height
+		visualHeight += 10
+	}
+
+	x := float64(leftMargin)
+	y := bottomMargin + visualHeight
+	for i, box := range lineBoxes {
+		ext := box.Extent()
+		y -= ext.Height
+
+		// draw the line
+		box.Draw(page, x, y)
+
+		// draw the first few tokens after the linebreak, to illustrate
+		// the linebreak decision
+		pos := endIdx[i]
+		naturalWidth := 0.0
+		var extra []Box
+		for ; pos < len(hList); pos++ {
+			switch h := hList[pos].(type) {
+			case *hModeGlue:
+				glue := &h.GlueBox
+				naturalWidth += glue.Length
+				extra = append(extra, glue)
+			case *hModeBox:
+				naturalWidth += h.width
+				extra = append(extra, h.Box)
+			case *hModePenalty:
+				naturalWidth += h.width
+			default:
+				panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
+			}
+			if naturalWidth > 72 {
+				break
+			}
+		}
+		overflow := HBox(extra...)
+		ext = overflow.Extent()
+		page.PushGraphicsState()
+		w := ext.Width
+		if w > 72 {
+			w = 72
+		}
+		page.Rectangle(x+e.TextWidth, y-ext.Depth, w, ext.Height+ext.Depth)
+		page.ClipNonZero()
+		page.EndPath()
+		overflow.Draw(page, x+e.TextWidth, y)
+		page.SetGraphicsState("gs:t")
+		page.SetFillColor(color.RGB(1, 1, 1))
+		page.Rectangle(x+e.TextWidth, y-ext.Depth, w, ext.Height+ext.Depth)
+		page.Fill()
+		page.PopGraphicsState()
+
+		// add annotations about the badness of the line
+		if badness[i] != badnessDecent {
+			page.BeginText()
+			page.StartLine(x+e.TextWidth+10+72+10, y)
+			page.SetFont(F, 7)
+			page.SetFillColor(annotationColor)
+			page.ShowText(badness[i].String())
+			page.EndText()
+		}
+
+		y -= ext.Depth
+		y -= 10
+	}
+
+	dict, err := page.Close()
+	if err != nil {
+		return err
+	}
+	dict["MediaBox"] = &pdf.Rectangle{
+		LLx: 0,
+		LLy: 0,
+		URx: leftMargin + e.TextWidth + rigthMargin,
+		URy: topMargin + visualHeight + bottomMargin,
+	}
+	_, err = tree.AppendPage(dict)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func format(x float64) string {

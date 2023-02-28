@@ -2,57 +2,57 @@ package layout
 
 import (
 	"fmt"
-
-	"seehuhn.de/go/dag"
 )
 
 func (e *Engine) EndParagraph() {
-	// TODO(voss): check that no node has infinite shrinkability (since
-	// otherwise the whole paragraph would fit into a single line)
+	// This must match the code in [Engine.VisualiseLineBreaks]
 
+	// Gather the material for the line breaker.
+	hList := e.HList
+	// Add the final glue ...
+	if e.ParFillSkip != nil {
+		parFillSkip := &hModeGlue{
+			GlueBox: *e.ParFillSkip,
+			Text:    "\n",
+		}
+		hList = append(e.HList, parFillSkip)
+	}
+	// ... and a forced line break.
+	hList = append(hList, &hModePenalty{Penalty: PenaltyForceBreak})
+
+	e.HList = e.HList[:0]
+
+	// Break the paragraph into lines.
+	br := &knuthPlassLineBreaker{
+		α: 100,
+		γ: 100,
+		ρ: 10,
+		q: 0,
+		lineWidth: func(lineNo int) float64 {
+			return e.TextWidth
+		},
+		hList: hList,
+	}
+	breaks := br.Run()
+
+	// Add the lines to the vertical list.
 	if len(e.VList) > 0 && e.ParSkip != nil {
 		e.VList = append(e.VList, e.ParSkip)
 	}
-
-	// TODO(voss): make this configurable
-	parFillSkip := &hModeGlue{
-		GlueBox: GlueBox{
-			Plus: stretchAmount{Val: 1, Order: 1},
-		},
-		Text:    "\n",
-		NoBreak: true,
-	}
-	e.HList = append(e.HList, parFillSkip)
-
-	findPath := dag.ShortestPathDyn[*breakNode, int, float64]
-	e2 := lineBreaker{e}
-	start := &breakNode{}
-	end := &breakNode{
-		pos:         len(e.HList),
-		lineNo:      0,
-		prevBadness: -100,
-	}
-	breaks, err := findPath(e2, start, end)
-	if err != nil {
-		panic(err) // unreachable
-	}
-
-	curBreak := &breakNode{}
+	prevPos := 0
 	for i, pos := range breaks {
 		var currentLine []Box
 		if e.LeftSkip != nil {
 			currentLine = append(currentLine, e.LeftSkip)
 		}
-		for _, item := range e.HList[curBreak.pos:pos] {
+		for _, item := range hList[prevPos:pos] {
 			switch h := item.(type) {
 			case *hModeGlue:
-				glue := GlueBox(h.GlueBox)
-				currentLine = append(currentLine, &glue)
-			case *hModeText:
-				currentLine = append(currentLine, &TextBox{
-					F:      h.F,
-					Glyphs: h.glyphs,
-				})
+				currentLine = append(currentLine, &h.GlueBox)
+			case *hModeBox:
+				currentLine = append(currentLine, h.Box)
+			case *hModePenalty:
+				// TODO(voss)
 			default:
 				panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
 			}
@@ -69,76 +69,21 @@ func (e *Engine) EndParagraph() {
 			if i == len(breaks)-1 {
 				penalty += e.WidowPenalty
 			}
-			e.VList = append(e.VList, penalty)
+			e.VList = append(e.VList, Penalty(penalty))
 		}
+
+		prevPos = pos
 
 		lineBox := HBoxTo(e.TextWidth, currentLine...)
 		e.VAddBox(lineBox)
-
-		curBreak = e2.To(curBreak, pos)
-	}
-
-	e.HList = e.HList[:0]
-}
-
-func (g *Engine) getRelStretch(v *breakNode, e int) float64 {
-	width := &GlueBox{}
-	width.Add(g.LeftSkip)
-	for pos := v.pos; pos < e; pos++ {
-		switch h := g.HList[pos].(type) {
-		case *hModeGlue:
-			width.Add(&h.GlueBox)
-		case *hModeText:
-			width.Length += h.width
-		default:
-			panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
-		}
-	}
-	width.Add(g.RightSkip)
-
-	absStretch := g.TextWidth - width.Length
-
-	var relStretch float64
-	if absStretch >= 0 {
-		if width.Plus.Order > 0 {
-			absStretch = g.TextWidth
-		}
-		relStretch = absStretch / width.Plus.Val
-	} else {
-		if width.Minus.Order > 0 {
-			panic("infinite shrinkage")
-		}
-		relStretch = absStretch / width.Minus.Val
-	}
-	return relStretch
-}
-
-type badnessClass int
-
-const (
-	badnessVeryLoose badnessClass = 2
-	badnessLoose     badnessClass = 1
-	badnessDecent    badnessClass = 0
-	badnessTight     badnessClass = -1
-)
-
-func getBadnessClass(relStretch float64) badnessClass {
-	switch {
-	case relStretch >= 1:
-		return badnessVeryLoose
-	case relStretch >= 0.5:
-		return badnessLoose
-	case relStretch > -0.5:
-		return badnessDecent
-	default:
-		return badnessTight
 	}
 }
 
+// breaknode represents a possible line break.
 type breakNode struct {
-	pos         int
-	lineNo      int
-	prevBadness badnessClass
+	pos         int          // the position of the break in the hModeMaterial list
+	lineNo      int          // the number of the line before the break
+	prevBadness fitnessClass // the badness of the line before the break
 }
 
 func (v *breakNode) Before(other *breakNode) bool {
@@ -151,43 +96,49 @@ func (v *breakNode) Before(other *breakNode) bool {
 	return v.prevBadness < other.prevBadness
 }
 
+// lineBreaker implements the dag.DynamicGraph[*breakNode, int, float64] interface.
 type lineBreaker struct {
 	*Engine
+	hModeMaterial []interface{}
 }
 
-// Edge returns the outgoing edges of the given vertex.
-func (g lineBreaker) AppendEdges(res []int, v *breakNode) []int {
-	totalWidth := g.LeftSkip.minLength() + g.RightSkip.minLength()
-	glyphsSeen := false
-	for pos := v.pos + 1; ; pos++ {
-		if pos == len(g.HList) {
-			res = append(res, pos)
-			break
-		}
-		switch h := g.HList[pos].(type) {
-		case *hModeGlue:
-			if glyphsSeen && !h.NoBreak {
+// AppendEdges appends the edges originating from v to res.
+// The edges are represented by the positions of the next line break.
+func (br lineBreaker) AppendEdges(res []int, v *breakNode) []int {
+	totalWidth := br.LeftSkip.minLength() + br.RightSkip.minLength()
+	hList := br.hModeMaterial
+breakLoop:
+	for pos := v.pos + 1; pos < len(hList); pos++ {
+		// Line breaks can occur at a penalty, if the penalty is not +oo,
+		// or at a glue, if the glue is immediately preceded by a box.
+		switch h := hList[pos].(type) {
+		case *hModePenalty:
+			if h.Penalty < PenaltyPreventBreak {
 				res = append(res, pos)
-				glyphsSeen = false
+			}
+			if h.Penalty == PenaltyForceBreak {
+				break breakLoop
+			}
+			totalWidth += h.width
+		case *hModeGlue:
+			if _, prevIsBox := hList[pos-1].(*hModeBox); prevIsBox {
+				res = append(res, pos)
 			}
 			totalWidth += h.Length - h.Minus.Val
-		case *hModeText:
-			glyphsSeen = true
+		case *hModeBox:
 			totalWidth += h.width
-		default:
-			panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
 		}
-		if totalWidth > g.TextWidth && len(res) > 0 {
-			break
+		if totalWidth > br.TextWidth && len(res) > 0 {
+			break breakLoop
 		}
 	}
 
 	return res
 }
 
-// Length returns the "cost" of adding a line break at e.
-func (e lineBreaker) Length(v *breakNode, pos int) float64 {
-	q := e.getRelStretch(v, pos)
+// Length returns the "cost" of adding a line break at pos.
+func (br lineBreaker) Length(v *breakNode, pos int) float64 {
+	q := br.getRelStretch(v, pos)
 
 	cost := 0.0
 	if q < -1 {
@@ -195,39 +146,67 @@ func (e lineBreaker) Length(v *breakNode, pos int) float64 {
 	} else {
 		cost += 100 * q * q
 	}
-	thisBadness := getBadnessClass(q)
+	thisBadness := getFitnessClass(q)
 	if v.lineNo > 0 && abs(thisBadness-v.prevBadness) > 1 {
 		cost += 10
 	}
 	return cost * cost
 }
 
-func abs(x badnessClass) badnessClass {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
-
 // To returns the endpoint of a edge e starting at vertex v.
-func (g lineBreaker) To(v *breakNode, pos int) *breakNode {
+func (br lineBreaker) To(v *breakNode, pos int) *breakNode {
 	pos0 := pos
-	for pos < len(g.HList) && hDiscardible(g.HList[pos]) {
+	for pos < len(br.hModeMaterial) && hDiscardible(br.hModeMaterial[pos]) {
 		pos++
 	}
 	return &breakNode{
 		lineNo:      v.lineNo + 1,
 		pos:         pos,
-		prevBadness: getBadnessClass(g.getRelStretch(v, pos0)),
+		prevBadness: getFitnessClass(br.getRelStretch(v, pos0)),
 	}
+}
+
+func (br lineBreaker) getRelStretch(v *breakNode, end int) float64 {
+	width := &GlueBox{}
+	width.Add(br.LeftSkip)
+	for pos := v.pos; pos < end; pos++ {
+		switch h := br.hModeMaterial[pos].(type) {
+		case *hModeBox:
+			width.Length += h.width
+		case *hModeGlue:
+			width.Add(&h.GlueBox)
+		case *hModePenalty:
+			width.Length += h.width
+		}
+	}
+	width.Add(br.RightSkip)
+
+	absStretch := br.TextWidth - width.Length
+
+	var relStretch float64
+	if absStretch >= 0 { // loose line
+		plusVal := width.Plus.Val
+		if width.Plus.Order > 0 {
+			plusVal = br.TextWidth
+		}
+		relStretch = absStretch / plusVal
+	} else { // tight line
+		if width.Minus.Order > 0 {
+			panic("infinite shrinkage")
+		}
+		relStretch = absStretch / width.Minus.Val
+	}
+	return relStretch
 }
 
 func hDiscardible(h interface{}) bool {
 	switch h.(type) {
+	case *hModeBox:
+		return false
 	case *hModeGlue:
 		return true
-	case *hModeText:
-		return false
+	case *hModePenalty:
+		return true
 	default:
 		panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
 	}

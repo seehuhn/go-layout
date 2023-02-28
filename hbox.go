@@ -17,8 +17,6 @@
 package layout
 
 import (
-	"math"
-
 	"seehuhn.de/go/pdf/graphics"
 )
 
@@ -31,44 +29,50 @@ type hBox struct {
 
 // HBox creates a new HBox
 func HBox(children ...Box) Box {
-	hbox := &hBox{
-		BoxExtent: BoxExtent{
-			Height: math.Inf(-1),
-			Depth:  math.Inf(-1),
-		},
+	res := &hBox{
 		Contents: children,
 	}
+	first := true
 	for _, box := range children {
 		ext := box.Extent()
-		hbox.Width += ext.Width
-		if ext.Height > hbox.Height && !ext.WhiteSpaceOnly {
-			hbox.Height = ext.Height
+		res.Width += ext.Width
+		if ext.WhiteSpaceOnly {
+			continue
 		}
-		if ext.Depth > hbox.Depth && !ext.WhiteSpaceOnly {
-			hbox.Depth = ext.Depth
+
+		if ext.Height > res.Height || first {
+			res.Height = ext.Height
 		}
+		if ext.Depth > res.Depth || first {
+			res.Depth = ext.Depth
+		}
+		first = false
 	}
-	return hbox
+	return res
 }
 
 // HBoxTo creates a new HBox with the given width
 func HBoxTo(width float64, contents ...Box) Box {
 	res := &hBox{
 		BoxExtent: BoxExtent{
-			Width:  width,
-			Height: math.Inf(-1),
-			Depth:  math.Inf(-1),
+			Width: width,
 		},
 		Contents: contents,
 	}
+	first := true
 	for _, box := range contents {
 		ext := box.Extent()
-		if ext.Height > res.Height && !ext.WhiteSpaceOnly {
+		if ext.WhiteSpaceOnly {
+			continue
+		}
+
+		if ext.Height > res.Height || first {
 			res.Height = ext.Height
 		}
-		if ext.Depth > res.Depth && !ext.WhiteSpaceOnly {
+		if ext.Depth > res.Depth || first {
 			res.Depth = ext.Depth
 		}
+		first = false
 	}
 	return res
 }
@@ -102,10 +106,7 @@ func (obj *hBox) stretchTo(width float64) {
 
 		if stretchTotal > 0 {
 			q := (width - naturalWidth) / stretchTotal
-			if level == 0 && q > 1 {
-				// glue can't shrink beyond its minimum width
-				q = 1
-			}
+			// glue can stretch beyond its natural width, if needed
 			for _, i := range ii {
 				child := obj.Contents[i]
 				ext := child.Extent()
@@ -135,7 +136,10 @@ func (obj *hBox) stretchTo(width float64) {
 
 		if shrinkTotal > 0 {
 			q := (naturalWidth - width) / shrinkTotal
-			// glue can stretch beyond its natural width, if needed
+			if level == 0 && q > 1 {
+				// glue can't shrink beyond its minimum width
+				q = 1
+			}
 			for _, i := range ii {
 				child := obj.Contents[i]
 				ext := child.Extent()
@@ -148,6 +152,7 @@ func (obj *hBox) stretchTo(width float64) {
 
 // Draw implements the Box interface.
 func (obj *hBox) Draw(page *graphics.Page, xPos, yPos float64) {
+	// TODO(voss): don't modify the hBox contents
 	obj.stretchTo(obj.Width)
 
 	x := xPos

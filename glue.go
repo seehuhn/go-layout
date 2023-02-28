@@ -44,6 +44,25 @@ func (s *stretchAmount) Add(other stretchAmount) {
 	}
 }
 
+func (s *stretchAmount) Minus(other stretchAmount) stretchAmount {
+	if other.Order == s.Order {
+		return stretchAmount{
+			Val:   s.Val - other.Val,
+			Order: s.Order,
+		}
+	} else if other.Order > s.Order {
+		return stretchAmount{
+			Val:   -other.Val,
+			Order: other.Order,
+		}
+	} else { // other.Order < s.Order
+		return stretchAmount{
+			Val:   s.Val,
+			Order: s.Order,
+		}
+	}
+}
+
 // Glue returns a new "glue" box with the given natural length and
 // stretchability.
 func Glue(length float64, plus float64, plusLevel int, minus float64, minusLevel int) *GlueBox {
@@ -58,6 +77,14 @@ type GlueBox struct {
 	Length float64
 	Plus   stretchAmount
 	Minus  stretchAmount
+}
+
+func (g *GlueBox) Clone() *GlueBox {
+	return &GlueBox{
+		Length: g.Length,
+		Plus:   g.Plus,
+		Minus:  g.Minus,
+	}
 }
 
 func (g *GlueBox) minLength() float64 {

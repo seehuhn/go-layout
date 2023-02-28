@@ -1,6 +1,7 @@
 package layout
 
 import (
+	"fmt"
 	"math"
 
 	"seehuhn.de/go/pdf/graphics"
@@ -50,6 +51,12 @@ func (e *Engine) MakePage(height float64) Box {
 		if cost <= bestCost {
 			bestCost = cost
 			bestPos = c.pos
+		}
+	}
+
+	if bestPos < 0 {
+		for _, c := range e.VList {
+			fmt.Printf("%T: %v\n", c, c)
 		}
 	}
 
@@ -190,7 +197,7 @@ func (e *Engine) vCanBreak(pos int) bool {
 		}
 		return false
 	case Penalty: // at a penalty
-		return obj < PenaltyPreventBreak
+		return float64(obj) < PenaltyPreventBreak
 	default:
 		return false
 	}

@@ -1,15 +1,35 @@
 package layout
 
 import (
-	"math"
 	"strings"
 
 	"seehuhn.de/go/pdf/color"
 	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/sfnt/funit"
-	"seehuhn.de/go/sfnt/glyph"
 )
+
+// A list of horizontal mode items can contain the following types:
+//  - *hModeBox: a box which is not affected by line breaking.
+//        The only property relevant for line breaking is the width.
+//  - *hModeGlue:
+//  - *hModePenalty: an optional breakpoint
+
+type hModeBox struct {
+	Box
+	width float64
+}
+
+type hModeGlue struct {
+	GlueBox
+	Text string
+}
+
+type hModePenalty struct {
+	Penalty float64
+	width   float64
+	flagged bool
+}
 
 type Engine struct {
 	// The list of HList in the horizontal mode.
@@ -21,18 +41,19 @@ type Engine struct {
 	VList     []Box
 	PrevDepth float64
 
-	TextWidth float64
-	LeftSkip  *GlueBox
-	RightSkip *GlueBox
+	TextWidth   float64
+	LeftSkip    *GlueBox
+	RightSkip   *GlueBox
+	ParFillSkip *GlueBox
 
 	TopSkip      float64
 	BottomGlue   *GlueBox
 	BaseLineSkip float64
 	ParSkip      *GlueBox // TODO(voss)
 
-	InterLinePenalty Penalty
-	ClubPenalty      Penalty
-	WidowPenalty     Penalty
+	InterLinePenalty float64
+	ClubPenalty      float64
+	WidowPenalty     float64
 
 	PageNumber int
 
@@ -78,10 +99,13 @@ func (e *Engine) HAddText(F *FontInfo, par string) {
 			}
 		}
 		gg := F.Font.Typeset(f, F.Size)
-		e.HList = append(e.HList, &hModeText{
+		box := &TextBox{
 			F:      F,
-			glyphs: gg,
-			width:  F.Font.ToPDF(F.Size, gg.AdvanceWidth()),
+			Glyphs: gg,
+		}
+		e.HList = append(e.HList, &hModeBox{
+			Box:   box,
+			width: F.Font.ToPDF(F.Size, gg.AdvanceWidth()),
 		})
 	}
 }
@@ -104,18 +128,6 @@ type FontInfo struct {
 	Color color.Color
 }
 
-type hModeText struct {
-	F      *FontInfo
-	glyphs glyph.Seq
-	width  float64
-}
-
-type hModeGlue struct {
-	GlueBox
-	Text    string
-	NoBreak bool
-}
-
 type Penalty float64
 
 func (obj Penalty) Extent() *BoxExtent {
@@ -127,8 +139,3 @@ func (obj Penalty) Extent() *BoxExtent {
 func (obj Penalty) Draw(page *graphics.Page, xPos, yPos float64) {
 	// pass
 }
-
-var (
-	PenaltyPreventBreak = Penalty(math.Inf(+1))
-	PenaltyForceBreak   = Penalty(math.Inf(-1))
-)
