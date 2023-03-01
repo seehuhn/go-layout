@@ -23,14 +23,17 @@ func (e *Engine) EndParagraph() {
 
 	e.HList = e.HList[:0]
 
+	lineWidth := &Skip{Length: e.TextWidth}
+	lineWidth = lineWidth.Minus(e.LeftSkip).Minus(e.RightSkip)
+
 	// Break the paragraph into lines.
 	br := &knuthPlassLineBreaker{
 		α: 100,
 		γ: 100,
 		ρ: 1000,
 		q: 0,
-		lineWidth: func(lineNo int) float64 {
-			return e.TextWidth
+		lineWidth: func(lineNo int) *Skip {
+			return lineWidth
 		},
 		hList: hList,
 	}

@@ -13,7 +13,7 @@ type knuthPlassLineBreaker struct {
 	ρ float64 // upper bound on the adjustment ratios
 	q int     // looseness parameter (try to in-/decrease number of lines by q)
 
-	lineWidth func(lineNo int) float64
+	lineWidth func(lineNo int) *Skip
 
 	hList []interface{}
 
@@ -176,6 +176,7 @@ func (br *knuthPlassLineBreaker) computeDemerits(r float64, pb float64, a *knuth
 	if abs(c-a.fitness) > 1 {
 		d += br.γ
 	}
+	d += a.totalDemerits
 	return d
 }
 
@@ -206,28 +207,28 @@ func (br *knuthPlassLineBreaker) IsFlagged(pos int) bool {
 }
 
 func (br *knuthPlassLineBreaker) AdjustmentRatio(a *knuthPlassNode, b int) float64 {
-	L := br.total.Length - a.total.Length
+	needed := br.total.Minus(a.total)
 	if p, isPenalty := br.hList[b].(*hModePenalty); isPenalty {
-		L += p.width
+		needed.Length += p.width
 	}
 	available := br.lineWidth(a.line)
-	if L < available { // loose line
-		stretch := br.total.Plus.Minus(a.total.Plus)
+	excess := needed.Minus(available)
+	if excess.Length < -1e-3 { // loose line
+		stretch := excess.Stretch
 		if stretch.Order > 0 {
 			return 0
 		}
 		if stretch.Val > 0 {
-			return (available - L) / stretch.Val
+			return -excess.Length / stretch.Val
 		}
 		return math.Inf(+1)
-	} else if L > available { // tight line
-		shrink := br.total.Minus.Minus(a.total.Minus)
+	} else if excess.Length > 1e-3 { // tight line
+		shrink := excess.Shrink
 		if shrink.Order > 0 {
-			// TODO(voss): what to do here?
 			return 0
 		}
 		if shrink.Val > 0 {
-			return (available - L) / shrink.Val
+			return -excess.Length / shrink.Val
 		}
 		return math.Inf(+1)
 	}
@@ -237,10 +238,10 @@ func (br *knuthPlassLineBreaker) AdjustmentRatio(a *knuthPlassNode, b int) float
 type fitnessClass int
 
 const (
-	fitnessVeryLoose fitnessClass = 2
-	fitnessLoose     fitnessClass = 1
-	fitnessDecent    fitnessClass = 0
 	fitnessTight     fitnessClass = -1
+	fitnessDecent    fitnessClass = 0
+	fitnessLoose     fitnessClass = 1
+	fitnessVeryLoose fitnessClass = 2
 )
 
 func (b fitnessClass) String() string {

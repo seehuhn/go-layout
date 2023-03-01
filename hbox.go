@@ -88,23 +88,23 @@ func (obj *hBox) Draw(page *graphics.Page, xPos, yPos float64) {
 func horizontalLayout(x, width float64, boxes ...Box) []float64 {
 	xx := make([]float64, 0, len(boxes))
 	total := measureWidth(boxes)
-	if total.Length < width-1e-3 && total.Plus.Val > 0 {
+	if total.Length < width-1e-3 && total.Stretch.Val > 0 {
 		// contents are too narrow, stretch all glue
-		q := (width - total.Length) / total.Plus.Val
+		q := (width - total.Length) / total.Stretch.Val
 		for _, box := range boxes {
 			xx = append(xx, x)
-			x += box.Extent().Width + q*getStretch(box, total.Plus.Order)
+			x += box.Extent().Width + q*getStretch(box, total.Stretch.Order)
 		}
-	} else if total.Length > width+1e-3 && total.Minus.Val > 0 {
+	} else if total.Length > width+1e-3 && total.Shrink.Val > 0 {
 		// contents are too wide, shrink all glue
-		q := (total.Length - width) / total.Minus.Val
-		if total.Minus.Order == 0 && q > 1 {
+		q := (total.Length - width) / total.Shrink.Val
+		if total.Shrink.Order == 0 && q > 1 {
 			// glue can't shrink beyond its minimum width
 			q = 1
 		}
 		for _, box := range boxes {
 			xx = append(xx, x)
-			x += box.Extent().Width - q*getShrink(box, total.Minus.Order)
+			x += box.Extent().Width - q*getShrink(box, total.Shrink.Order)
 		}
 	} else {
 		// lay out contents at their natural width
@@ -121,7 +121,7 @@ func getStretch(box Box, order int) float64 {
 	if !ok {
 		return 0
 	}
-	info := stretch.Stretch()
+	info := stretch.GetStretch()
 	if info.Order != order {
 		return 0
 	}
@@ -133,7 +133,7 @@ func getShrink(box Box, order int) float64 {
 	if !ok {
 		return 0
 	}
-	info := shrink.Shrink()
+	info := shrink.GetShrink()
 	if info.Order != order {
 		return 0
 	}

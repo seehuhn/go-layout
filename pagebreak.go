@@ -136,15 +136,15 @@ func (e *Engine) vGetCandidates(height float64) []vCandidate {
 			} else if total.Length < height {
 				// need to stretch
 				needStretch := height - total.Length
-				canStrech := total.Plus.Val
-				if total.Plus.Order > 0 {
+				canStrech := total.Stretch.Val
+				if total.Stretch.Order > 0 {
 					canStrech = height
 				}
 				badness = 100 * math.Pow(needStretch/canStrech, 3)
 			} else {
 				// need to shrink
 				needShrink := total.Length - height
-				canShrink := total.Minus.Val
+				canShrink := total.Shrink.Val
 				// no infinite shrinkage should occur here
 				badness = math.Min(1e4, 100*math.Pow(needShrink/canShrink, 3))
 			}
@@ -166,10 +166,10 @@ func (e *Engine) vGetCandidates(height float64) []vCandidate {
 			prevDept = ext.Depth
 
 			if stretch, ok := box.(stretcher); ok {
-				total.Plus.Add(stretch.Stretch())
+				total.Stretch.IncrementBy(stretch.GetStretch())
 			}
 			if shrink, ok := box.(shrinker); ok {
-				total.Minus.Add(shrink.Shrink())
+				total.Shrink.IncrementBy(shrink.GetShrink())
 			}
 		}
 	}

@@ -167,10 +167,10 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float
 		// show vertial sizes in the right margin
 		label = format(ext.Height + ext.Depth)
 		if isStretch {
-			label = label + fmt.Sprintf(" plus %s", formatS(str.Stretch()))
+			label = label + fmt.Sprintf(" plus %s", formatS(str.GetStretch()))
 		}
 		if isShrink {
-			label = label + fmt.Sprintf(" minus %s", formatS(shr.Shrink()))
+			label = label + fmt.Sprintf(" minus %s", formatS(shr.GetShrink()))
 		}
 		if !ext.WhiteSpaceOnly || label != "0" {
 			page.BeginText()
@@ -249,10 +249,10 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float
 		prevDept = ext.Depth
 
 		if stretch, ok := box.(stretcher); ok {
-			total.Plus.Add(stretch.Stretch())
+			total.Stretch.IncrementBy(stretch.GetStretch())
 		}
 		if shrink, ok := box.(shrinker); ok {
-			total.Minus.Add(shrink.Shrink())
+			total.Shrink.IncrementBy(shrink.GetShrink())
 		}
 
 		page.BeginText()
@@ -260,7 +260,7 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float
 		page.SetFont(F, 7)
 		page.StartLine(leftMargin+width-30, yTop-vPos[i+1]-2)
 		page.ShowText(fmt.Sprintf("%s plus %s minus %s",
-			format(total.Length), formatS(total.Plus), formatS(total.Minus)))
+			format(total.Length), formatS(total.Stretch), formatS(total.Shrink)))
 		page.EndText()
 	}
 	y := yTop - vPos[bestPos] - 12
@@ -270,7 +270,7 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float
 		page.SetFont(F, 7)
 		page.StartLine(leftMargin+width+15, y)
 		page.ShowText(fmt.Sprintf("%s plus %s minus %s (bottomglue)",
-			format(b.Length), formatS(b.Plus), formatS(b.Minus)))
+			format(b.Length), formatS(b.Stretch), formatS(b.Shrink)))
 		page.EndText()
 		total.Add(b)
 		y -= 10
@@ -280,7 +280,7 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float
 		page.SetFont(F, 7)
 		page.StartLine(leftMargin+width-30, y)
 		page.ShowText(fmt.Sprintf("%s plus %s minus %s",
-			format(total.Length), formatS(total.Plus), formatS(total.Minus)))
+			format(total.Length), formatS(total.Stretch), formatS(total.Shrink)))
 		page.EndText()
 		y -= 10
 	}
@@ -351,13 +351,16 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 	}
 	hList = append(hList, &hModePenalty{Penalty: PenaltyForceBreak})
 
+	lineWidth := &Skip{Length: e.TextWidth}
+	lineWidth = lineWidth.Minus(e.LeftSkip).Minus(e.RightSkip)
+
 	br := &knuthPlassLineBreaker{
 		α: 100,
 		γ: 100,
 		ρ: 1000,
 		q: 0,
-		lineWidth: func(lineNo int) float64 {
-			return e.TextWidth
+		lineWidth: func(lineNo int) *Skip {
+			return lineWidth
 		},
 		hList: hList,
 	}
@@ -495,22 +498,27 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 			if !isValidBreakpoint(hList, startPos[i]+j) {
 				continue
 			}
-			page.MoveTo(x, y)
-			page.LineTo(x-1, y-3)
-			page.LineTo(x+1, y-3)
+			page.MoveTo(x, y-1)
+			page.LineTo(x-1, y-4)
+			page.LineTo(x+1, y-4)
 		}
 		page.Fill()
 		page.PopGraphicsState()
 
 		// add the annotations
 		page.PushGraphicsState()
+		page.SetLineWidth(3.5)
+		page.SetStrokeColor(color.Gray(0.9))
+		page.MoveTo(leftMargin+e.TextWidth+72+1.5, 0)
+		page.LineTo(leftMargin+e.TextWidth+72+1.5, bottomMargin+visualHeight+topMargin)
+		page.Stroke()
 		page.SetLineWidth(1.5)
 		page.SetStrokeColor(color.Gray(0.8))
 		page.MoveTo(leftMargin+e.TextWidth+72+0.5, 0)
 		page.LineTo(leftMargin+e.TextWidth+72+0.5, bottomMargin+visualHeight+topMargin)
 		page.Stroke()
 		page.SetLineWidth(0.5)
-		page.SetStrokeColor(annotationColor)
+		page.SetStrokeColor(color.Gray(0.6))
 		page.MoveTo(leftMargin+e.TextWidth+72, 0)
 		page.LineTo(leftMargin+e.TextWidth+72, bottomMargin+visualHeight+topMargin)
 		page.Stroke()
@@ -524,17 +532,17 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 		page.ShowText(fmt.Sprintf("%+.1f", e.TextWidth-total.Length))
 		var r float64
 		if total.Length > e.TextWidth+0.05 {
-			r = (e.TextWidth - total.Length) / total.Minus.Val
-			label := fmt.Sprintf(" / %.1f (%.0f%%)", total.Minus.Val, -100*r)
-			if total.Plus.Order > 0 {
+			r = (e.TextWidth - total.Length) / total.Shrink.Val
+			label := fmt.Sprintf(" / %.1f (%.0f%%)", total.Shrink.Val, -100*r)
+			if total.Stretch.Order > 0 {
 				r = 0
 				label = " / inf"
 			}
 			page.ShowText(label)
 		} else if total.Length < e.TextWidth-0.05 {
-			r = (e.TextWidth - total.Length) / total.Plus.Val
-			label := fmt.Sprintf(" / %.1f (%.0f%%)", total.Plus.Val, 100*r)
-			if total.Plus.Order > 0 {
+			r = (e.TextWidth - total.Length) / total.Stretch.Val
+			label := fmt.Sprintf(" / %.1f (%.0f%%)", total.Stretch.Val, 100*r)
+			if total.Stretch.Order > 0 {
 				r = 0
 				label = " / inf"
 			}

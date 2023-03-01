@@ -73,17 +73,17 @@ func (e *Engine) HAddText(F *FontInfo, par string) {
 
 	spaceGlue := &hModeGlue{
 		Skip: Skip{
-			Length: pdfSpaceWidth,
-			Plus:   stretchAmount{Val: pdfSpaceWidth / 2},
-			Minus:  stretchAmount{Val: pdfSpaceWidth / 3},
+			Length:  pdfSpaceWidth,
+			Stretch: stretchAmount{Val: pdfSpaceWidth / 2},
+			Shrink:  stretchAmount{Val: pdfSpaceWidth / 3},
 		},
 		Text: " ",
 	}
 	xSpaceGlue := &hModeGlue{
 		Skip: Skip{
-			Length: 1.5 * pdfSpaceWidth,
-			Plus:   stretchAmount{Val: pdfSpaceWidth * 1.5},
-			Minus:  stretchAmount{Val: pdfSpaceWidth},
+			Length:  1.5 * pdfSpaceWidth,
+			Stretch: stretchAmount{Val: pdfSpaceWidth * 1.5},
+			Shrink:  stretchAmount{Val: pdfSpaceWidth},
 		},
 		Text: " ",
 	}

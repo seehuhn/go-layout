@@ -22,27 +22,57 @@ import (
 	"seehuhn.de/go/pdf/graphics"
 )
 
+type stretcher interface {
+	GetStretch() stretchAmount
+}
+
+type shrinker interface {
+	GetShrink() stretchAmount
+}
+
 // Glue returns a new "glue" box with the given natural length and
 // stretchability.
 func Glue(length float64, plus float64, plusLevel int, minus float64, minusLevel int) *Skip {
 	return &Skip{
-		Length: length,
-		Plus:   stretchAmount{plus, plusLevel},
-		Minus:  stretchAmount{minus, minusLevel},
+		Length:  length,
+		Stretch: stretchAmount{plus, plusLevel},
+		Shrink:  stretchAmount{minus, minusLevel},
 	}
 }
 
 type Skip struct {
-	Length float64
-	Plus   stretchAmount
-	Minus  stretchAmount
+	Length  float64
+	Stretch stretchAmount
+	Shrink  stretchAmount
+}
+
+func (g *Skip) Plus(other *Skip) *Skip {
+	if other == nil {
+		return g.Clone()
+	}
+	return &Skip{
+		Length:  g.Length + other.Length,
+		Stretch: g.Stretch.Plus(other.Stretch),
+		Shrink:  g.Shrink.Plus(other.Shrink),
+	}
+}
+
+func (g *Skip) Minus(other *Skip) *Skip {
+	if other == nil {
+		return g.Clone()
+	}
+	return &Skip{
+		Length:  g.Length - other.Length,
+		Stretch: g.Stretch.Minus(other.Stretch),
+		Shrink:  g.Shrink.Minus(other.Shrink),
+	}
 }
 
 func (g *Skip) Clone() *Skip {
 	return &Skip{
-		Length: g.Length,
-		Plus:   g.Plus,
-		Minus:  g.Minus,
+		Length:  g.Length,
+		Stretch: g.Stretch,
+		Shrink:  g.Shrink,
 	}
 }
 
@@ -50,20 +80,20 @@ func (g *Skip) minLength() float64 {
 	if g == nil {
 		return 0
 	}
-	if g.Minus.Order > 0 {
+	if g.Shrink.Order > 0 {
 		return math.Inf(-1)
 	}
-	return g.Length - g.Minus.Val
+	return g.Length - g.Shrink.Val
 }
 
 func (g *Skip) maxLength() float64 {
 	if g == nil {
 		return 0
 	}
-	if g.Plus.Order > 0 {
+	if g.Stretch.Order > 0 {
 		return math.Inf(+1)
 	}
-	return g.Length + g.Plus.Val
+	return g.Length + g.Stretch.Val
 }
 
 func (obj *Skip) Extent() *BoxExtent {
@@ -76,12 +106,12 @@ func (obj *Skip) Extent() *BoxExtent {
 
 func (obj *Skip) Draw(page *graphics.Page, xPos, yPos float64) {}
 
-func (obj *Skip) Stretch() stretchAmount {
-	return obj.Plus
+func (obj *Skip) GetStretch() stretchAmount {
+	return obj.Stretch
 }
 
-func (obj *Skip) Shrink() stretchAmount {
-	return obj.Minus
+func (obj *Skip) GetShrink() stretchAmount {
+	return obj.Shrink
 }
 
 func (obj *Skip) Add(other *Skip) {
@@ -89,18 +119,18 @@ func (obj *Skip) Add(other *Skip) {
 		return
 	}
 	obj.Length += other.Length
-	obj.Plus.Add(other.Plus)
-	obj.Minus.Add(other.Minus)
+	obj.Stretch.IncrementBy(other.Stretch)
+	obj.Shrink.IncrementBy(other.Shrink)
 }
 
 func (obj *Skip) addBoxHeightAndDepth(box Box) {
 	ext := box.Extent()
 	obj.Length += ext.Height + ext.Depth
 	if stretch, ok := box.(stretcher); ok {
-		obj.Plus.Add(stretch.Stretch())
+		obj.Stretch.IncrementBy(stretch.GetStretch())
 	}
 	if shrink, ok := box.(shrinker); ok {
-		obj.Minus.Add(shrink.Shrink())
+		obj.Shrink.IncrementBy(shrink.GetShrink())
 	}
 }
 
@@ -122,21 +152,13 @@ func measureWidth(boxes []Box) *Skip {
 		ext := box.Extent()
 		res.Length += ext.Width
 		if stretch, ok := box.(stretcher); ok {
-			res.Plus.Add(stretch.Stretch())
+			res.Stretch.IncrementBy(stretch.GetStretch())
 		}
 		if shrink, ok := box.(shrinker); ok {
-			res.Minus.Add(shrink.Shrink())
+			res.Shrink.IncrementBy(shrink.GetShrink())
 		}
 	}
 	return res
-}
-
-type stretcher interface {
-	Stretch() stretchAmount
-}
-
-type shrinker interface {
-	Shrink() stretchAmount
 }
 
 type stretchAmount struct {
@@ -144,12 +166,31 @@ type stretchAmount struct {
 	Order int
 }
 
-func (s *stretchAmount) Add(other stretchAmount) {
+func (s *stretchAmount) IncrementBy(other stretchAmount) {
 	if other.Order > s.Order {
 		s.Val = other.Val
 		s.Order = other.Order
 	} else if other.Order == s.Order {
 		s.Val += other.Val
+	}
+}
+
+func (s *stretchAmount) Plus(other stretchAmount) stretchAmount {
+	if other.Order == s.Order {
+		return stretchAmount{
+			Val:   s.Val + other.Val,
+			Order: s.Order,
+		}
+	} else if other.Order > s.Order {
+		return stretchAmount{
+			Val:   other.Val,
+			Order: other.Order,
+		}
+	} else { // other.Order < s.Order
+		return stretchAmount{
+			Val:   s.Val,
+			Order: s.Order,
+		}
 	}
 }
 
