@@ -11,11 +11,12 @@ func (e *Engine) EndParagraph() {
 	hList := e.HList
 	// Add the final glue ...
 	if e.ParFillSkip != nil {
+		hList = append(hList, &hModePenalty{Penalty: PenaltyPreventBreak})
 		parFillSkip := &hModeGlue{
-			GlueBox: *e.ParFillSkip,
-			Text:    "\n",
+			Skip: *e.ParFillSkip,
+			Text: "\n",
 		}
-		hList = append(e.HList, parFillSkip)
+		hList = append(hList, parFillSkip)
 	}
 	// ... and a forced line break.
 	hList = append(hList, &hModePenalty{Penalty: PenaltyForceBreak})
@@ -48,7 +49,7 @@ func (e *Engine) EndParagraph() {
 		for _, item := range hList[prevPos:pos] {
 			switch h := item.(type) {
 			case *hModeGlue:
-				currentLine = append(currentLine, &h.GlueBox)
+				currentLine = append(currentLine, &h.Skip)
 			case *hModeBox:
 				currentLine = append(currentLine, h.Box)
 			case *hModePenalty:

@@ -22,6 +22,115 @@ import (
 	"seehuhn.de/go/pdf/graphics"
 )
 
+// Glue returns a new "glue" box with the given natural length and
+// stretchability.
+func Glue(length float64, plus float64, plusLevel int, minus float64, minusLevel int) *Skip {
+	return &Skip{
+		Length: length,
+		Plus:   stretchAmount{plus, plusLevel},
+		Minus:  stretchAmount{minus, minusLevel},
+	}
+}
+
+type Skip struct {
+	Length float64
+	Plus   stretchAmount
+	Minus  stretchAmount
+}
+
+func (g *Skip) Clone() *Skip {
+	return &Skip{
+		Length: g.Length,
+		Plus:   g.Plus,
+		Minus:  g.Minus,
+	}
+}
+
+func (g *Skip) minLength() float64 {
+	if g == nil {
+		return 0
+	}
+	if g.Minus.Order > 0 {
+		return math.Inf(-1)
+	}
+	return g.Length - g.Minus.Val
+}
+
+func (g *Skip) maxLength() float64 {
+	if g == nil {
+		return 0
+	}
+	if g.Plus.Order > 0 {
+		return math.Inf(+1)
+	}
+	return g.Length + g.Plus.Val
+}
+
+func (obj *Skip) Extent() *BoxExtent {
+	return &BoxExtent{
+		Width:          obj.Length,
+		Height:         obj.Length,
+		WhiteSpaceOnly: true,
+	}
+}
+
+func (obj *Skip) Draw(page *graphics.Page, xPos, yPos float64) {}
+
+func (obj *Skip) Stretch() stretchAmount {
+	return obj.Plus
+}
+
+func (obj *Skip) Shrink() stretchAmount {
+	return obj.Minus
+}
+
+func (obj *Skip) Add(other *Skip) {
+	if other == nil {
+		return
+	}
+	obj.Length += other.Length
+	obj.Plus.Add(other.Plus)
+	obj.Minus.Add(other.Minus)
+}
+
+func (obj *Skip) addBoxHeightAndDepth(box Box) {
+	ext := box.Extent()
+	obj.Length += ext.Height + ext.Depth
+	if stretch, ok := box.(stretcher); ok {
+		obj.Plus.Add(stretch.Stretch())
+	}
+	if shrink, ok := box.(shrinker); ok {
+		obj.Minus.Add(shrink.Shrink())
+	}
+}
+
+func measureHeight(boxes []Box) *Skip {
+	res := &Skip{}
+	for _, box := range boxes {
+		res.addBoxHeightAndDepth(box)
+	}
+	if len(boxes) > 0 {
+		ext := boxes[len(boxes)-1].Extent()
+		res.Length -= ext.Depth
+	}
+	return res
+}
+
+func measureWidth(boxes []Box) *Skip {
+	res := &Skip{}
+	for _, box := range boxes {
+		ext := box.Extent()
+		res.Length += ext.Width
+		if stretch, ok := box.(stretcher); ok {
+			res.Plus.Add(stretch.Stretch())
+		}
+		if shrink, ok := box.(shrinker); ok {
+			res.Minus.Add(shrink.Shrink())
+		}
+	}
+	return res
+}
+
 type stretcher interface {
 	Stretch() stretchAmount
 }
@@ -61,98 +170,4 @@ func (s *stretchAmount) Minus(other stretchAmount) stretchAmount {
 			Order: s.Order,
 		}
 	}
-}
-
-// Glue returns a new "glue" box with the given natural length and
-// stretchability.
-func Glue(length float64, plus float64, plusLevel int, minus float64, minusLevel int) *GlueBox {
-	return &GlueBox{
-		Length: length,
-		Plus:   stretchAmount{plus, plusLevel},
-		Minus:  stretchAmount{minus, minusLevel},
-	}
-}
-
-type GlueBox struct {
-	Length float64
-	Plus   stretchAmount
-	Minus  stretchAmount
-}
-
-func (g *GlueBox) Clone() *GlueBox {
-	return &GlueBox{
-		Length: g.Length,
-		Plus:   g.Plus,
-		Minus:  g.Minus,
-	}
-}
-
-func (g *GlueBox) minLength() float64 {
-	if g == nil {
-		return 0
-	}
-	if g.Minus.Order > 0 {
-		return math.Inf(-1)
-	}
-	return g.Length - g.Minus.Val
-}
-
-func (g *GlueBox) maxLength() float64 {
-	if g == nil {
-		return 0
-	}
-	if g.Plus.Order > 0 {
-		return math.Inf(+1)
-	}
-	return g.Length + g.Plus.Val
-}
-
-func (obj *GlueBox) Extent() *BoxExtent {
-	return &BoxExtent{
-		Width:          obj.Length,
-		Height:         obj.Length,
-		WhiteSpaceOnly: true,
-	}
-}
-
-func (obj *GlueBox) Draw(page *graphics.Page, xPos, yPos float64) {}
-
-func (obj *GlueBox) Stretch() stretchAmount {
-	return obj.Plus
-}
-
-func (obj *GlueBox) Shrink() stretchAmount {
-	return obj.Minus
-}
-
-func (obj *GlueBox) Add(other *GlueBox) {
-	if other == nil {
-		return
-	}
-	obj.Length += other.Length
-	obj.Plus.Add(other.Plus)
-	obj.Minus.Add(other.Minus)
-}
-
-func (obj *GlueBox) addBoxHeightAndDepth(box Box) {
-	ext := box.Extent()
-	obj.Length += ext.Height + ext.Depth
-	if stretch, ok := box.(stretcher); ok {
-		obj.Plus.Add(stretch.Stretch())
-	}
-	if shrink, ok := box.(shrinker); ok {
-		obj.Minus.Add(shrink.Shrink())
-	}
-}
-
-func equivalentHeightGlue(boxes []Box) *GlueBox {
-	res := &GlueBox{}
-	for _, box := range boxes {
-		res.addBoxHeightAndDepth(box)
-	}
-	if len(boxes) > 0 {
-		ext := boxes[len(boxes)-1].Extent()
-		res.Length -= ext.Depth
-	}
-	return res
 }

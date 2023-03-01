@@ -21,7 +21,7 @@ type hModeBox struct {
 }
 
 type hModeGlue struct {
-	GlueBox
+	Skip
 	Text string
 }
 
@@ -42,14 +42,14 @@ type Engine struct {
 	PrevDepth float64
 
 	TextWidth   float64
-	LeftSkip    *GlueBox
-	RightSkip   *GlueBox
-	ParFillSkip *GlueBox
+	LeftSkip    *Skip
+	RightSkip   *Skip
+	ParFillSkip *Skip
 
 	TopSkip      float64
-	BottomGlue   *GlueBox
+	BottomGlue   *Skip
 	BaseLineSkip float64
-	ParSkip      *GlueBox // TODO(voss)
+	ParSkip      *Skip // TODO(voss)
 
 	InterLinePenalty float64
 	ClubPenalty      float64
@@ -72,7 +72,7 @@ func (e *Engine) HAddText(F *FontInfo, par string) {
 	pdfSpaceWidth := F.Font.ToPDF(F.Size, spaceWidth)
 
 	spaceGlue := &hModeGlue{
-		GlueBox: GlueBox{
+		Skip: Skip{
 			Length: pdfSpaceWidth,
 			Plus:   stretchAmount{Val: pdfSpaceWidth / 2},
 			Minus:  stretchAmount{Val: pdfSpaceWidth / 3},
@@ -80,7 +80,7 @@ func (e *Engine) HAddText(F *FontInfo, par string) {
 		Text: " ",
 	}
 	xSpaceGlue := &hModeGlue{
-		GlueBox: GlueBox{
+		Skip: Skip{
 			Length: 1.5 * pdfSpaceWidth,
 			Plus:   stretchAmount{Val: pdfSpaceWidth * 1.5},
 			Minus:  stretchAmount{Val: pdfSpaceWidth},

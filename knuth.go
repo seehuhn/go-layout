@@ -18,25 +18,25 @@ type knuthPlassLineBreaker struct {
 	hList []interface{}
 
 	active []*knuthPlassNode
-	total  *GlueBox
+	total  *Skip
 }
 
 type knuthPlassNode struct {
 	pos           int
 	line          int
 	fitness       fitnessClass
-	total         *GlueBox
+	total         *Skip
 	totalDemerits float64
 	previous      *knuthPlassNode
 }
 
 func (br *knuthPlassLineBreaker) Run() []int {
-	start := &knuthPlassNode{total: &GlueBox{}}
+	start := &knuthPlassNode{total: &Skip{}}
 	br.active = append(br.active[:0], start)
-	br.total = &GlueBox{}
+	br.total = &Skip{}
 
 	for b := 0; b < len(br.hList); b++ {
-		if br.IsValidBreakpoint(b) {
+		if isValidBreakpoint(br.hList, b) {
 			pb := br.Penalty(b)
 
 			aIdx := 0
@@ -51,11 +51,12 @@ func (br *knuthPlassLineBreaker) Run() []int {
 
 					r := br.AdjustmentRatio(a, b)
 					if r < -1 || pb == PenaltyForceBreak {
-						// deactivate node a
+						// remove a from the active list
 						copy(br.active[aIdx:], br.active[aIdx+1:])
 						br.active[len(br.active)-1] = nil
 						br.active = br.active[:len(br.active)-1]
 					} else {
+						// leave a in the active list, skip to next node
 						aIdx++
 					}
 
@@ -79,14 +80,14 @@ func (br *knuthPlassLineBreaker) Run() []int {
 
 				if D < math.Inf(+1) {
 					// insert new active nodes for breaks from Ac to b
-					afterBTotal := br.total.Clone()
+					totalAfterB := br.total.Clone()
 				afterBLoop:
 					for i := b; i < len(br.hList); i++ {
 						switch h := br.hList[i].(type) {
 						case *hModeBox:
 							break afterBLoop
 						case *hModeGlue:
-							afterBTotal.Add(&h.GlueBox)
+							totalAfterB.Add(&h.Skip)
 						case *hModePenalty:
 							if i > b && h.Penalty == PenaltyForceBreak {
 								break afterBLoop
@@ -102,7 +103,7 @@ func (br *knuthPlassLineBreaker) Run() []int {
 							pos:           b,
 							line:          Ac[c+1].line + 1,
 							fitness:       c,
-							total:         afterBTotal,
+							total:         totalAfterB,
 							totalDemerits: Dc[c+1],
 							previous:      Ac[c+1],
 						}
@@ -120,7 +121,7 @@ func (br *knuthPlassLineBreaker) Run() []int {
 		case *hModeBox:
 			br.total.Length += h.width
 		case *hModeGlue:
-			br.total.Add(&h.GlueBox)
+			br.total.Add(&h.Skip)
 		}
 	}
 
@@ -178,12 +179,12 @@ func (br *knuthPlassLineBreaker) computeDemerits(r float64, pb float64, a *knuth
 	return d
 }
 
-func (br *knuthPlassLineBreaker) IsValidBreakpoint(pos int) bool {
-	switch h := br.hList[pos].(type) {
+func isValidBreakpoint(hList []interface{}, pos int) bool {
+	switch h := hList[pos].(type) {
 	case *hModePenalty:
 		return h.Penalty < PenaltyPreventBreak
 	case *hModeGlue:
-		_, prevIsBox := br.hList[pos-1].(*hModeBox)
+		_, prevIsBox := hList[pos-1].(*hModeBox)
 		return prevIsBox
 	default:
 		return false
@@ -236,21 +237,21 @@ func (br *knuthPlassLineBreaker) AdjustmentRatio(a *knuthPlassNode, b int) float
 type fitnessClass int
 
 const (
-	badnessVeryLoose fitnessClass = 2
-	badnessLoose     fitnessClass = 1
-	badnessDecent    fitnessClass = 0
-	badnessTight     fitnessClass = -1
+	fitnessVeryLoose fitnessClass = 2
+	fitnessLoose     fitnessClass = 1
+	fitnessDecent    fitnessClass = 0
+	fitnessTight     fitnessClass = -1
 )
 
 func (b fitnessClass) String() string {
 	switch b {
-	case badnessVeryLoose:
+	case fitnessVeryLoose:
 		return "very loose"
-	case badnessLoose:
+	case fitnessLoose:
 		return "loose"
-	case badnessDecent:
+	case fitnessDecent:
 		return "decent"
-	case badnessTight:
+	case fitnessTight:
 		return "tight"
 	default:
 		return fmt.Sprintf("badnessClass(%d)", b)
@@ -260,13 +261,13 @@ func (b fitnessClass) String() string {
 func getFitnessClass(r float64) fitnessClass {
 	var c fitnessClass
 	if r < -0.5 {
-		c = badnessTight
+		c = fitnessTight
 	} else if r <= 0.5 {
-		c = badnessDecent
+		c = fitnessDecent
 	} else if r <= 1.0 {
-		c = badnessLoose
+		c = fitnessLoose
 	} else {
-		c = badnessVeryLoose
+		c = fitnessVeryLoose
 	}
 	return c
 }

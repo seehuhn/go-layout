@@ -100,7 +100,7 @@ func (e *Engine) vGetCandidates(height float64) []vCandidate {
 		topSkip = 0
 	}
 
-	total := &GlueBox{
+	total := &Skip{
 		Length: topSkip,
 	}
 	total.Add(e.BottomGlue)
@@ -188,11 +188,11 @@ func (e *Engine) vCanBreak(pos int) bool {
 	}
 
 	switch obj := e.VList[pos].(type) {
-	case *GlueBox: // before glue, if following a non-discardible item
+	case *Skip: // before glue, if following a non-discardible item
 		return !vDiscardible(e.VList[pos-1])
 	case Kern: // before kern, if followed by glue
 		if pos < len(e.VList)-1 {
-			_, followedByGlue := e.VList[pos+1].(*GlueBox)
+			_, followedByGlue := e.VList[pos+1].(*Skip)
 			return followedByGlue
 		}
 		return false

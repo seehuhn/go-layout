@@ -137,7 +137,7 @@ func VBox2To(height float64, contents ...Box) Box {
 }
 
 func (obj *vBox2) Draw(page *graphics.Page, xPos, yPos float64) {
-	total := equivalentHeightGlue(obj.Contents)
+	total := measureHeight(obj.Contents)
 	extraSpace := obj.Height - total.Length
 	y := yPos + obj.Height
 	if extraSpace >= 0 {

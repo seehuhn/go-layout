@@ -118,7 +118,7 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float
 			}
 		case *hBox:
 			label = "hbox"
-		case *GlueBox:
+		case *Skip:
 			if obj == e.ParSkip {
 				label = "glue (parskip)"
 			} else {
@@ -218,7 +218,7 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float
 	page.PopGraphicsState()
 
 	// mark the accumulated page height, minus the required total
-	total := &GlueBox{
+	total := &Skip{
 		Length: -height,
 	}
 
@@ -336,17 +336,18 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 	)
 	var (
 		// geomColor  = color.RGB(0, 0, 0.9)
-		// breakColor = color.RGB(0.9, 0, 0)
-		annotationColor = color.RGB(0, 0.8, 0)
+		breakColor      = color.RGB(0.9, 0, 0)
+		annotationColor = color.RGB(0, 0.7, 0)
 	)
 
 	hList := e.HList
 	if e.ParFillSkip != nil {
+		hList = append(hList, &hModePenalty{Penalty: PenaltyPreventBreak})
 		parFillSkip := &hModeGlue{
-			GlueBox: *e.ParFillSkip,
-			Text:    "\n",
+			Skip: *e.ParFillSkip,
+			Text: "\n",
 		}
-		hList = append(e.HList, parFillSkip)
+		hList = append(hList, parFillSkip)
 	}
 	hList = append(hList, &hModePenalty{Penalty: PenaltyForceBreak})
 
@@ -362,12 +363,15 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 	}
 	breaks := br.Run()
 
+	var startPos []int
+	var hLists [][]interface{}
+	var lineContents [][]Box
 	var lineBoxes []Box
-	var badness []fitnessClass
-	var endIdx []int
+	var xxx [][]float64
 
 	prevPos := 0
 	for _, pos := range breaks {
+		startPos = append(startPos, prevPos)
 		var currentLine []Box
 		if e.LeftSkip != nil {
 			currentLine = append(currentLine, e.LeftSkip)
@@ -375,18 +379,23 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 		for _, item := range hList[prevPos:pos] {
 			switch h := item.(type) {
 			case *hModeGlue:
-				currentLine = append(currentLine, &h.GlueBox)
+				currentLine = append(currentLine, &h.Skip)
 			case *hModeBox:
 				currentLine = append(currentLine, h.Box)
-			case *hModePenalty:
-				// TODO(voss)
-			default:
-				panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
 			}
 		}
+		hLists = append(hLists, hList[prevPos:pos])
 		if e.RightSkip != nil {
 			currentLine = append(currentLine, e.RightSkip)
 		}
+		xx := horizontalLayout(leftMargin, e.TextWidth, currentLine...)
+		if e.LeftSkip != nil {
+			xx = xx[1:]
+		}
+		if e.RightSkip == nil {
+			xx = append(xx, e.TextWidth)
+		}
+		xxx = append(xxx, xx)
 
 	skipDiscardible:
 		for prevPos = pos; prevPos < len(hList); prevPos++ {
@@ -400,10 +409,9 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 			}
 		}
 
+		lineContents = append(lineContents, currentLine)
 		lineBox := HBoxTo(e.TextWidth, currentLine...)
 		lineBoxes = append(lineBoxes, lineBox)
-		badness = append(badness, 0) // TODO(voss)
-		endIdx = append(endIdx, pos)
 	}
 
 	// Now we have gathered all the lines.
@@ -424,6 +432,17 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 		visualHeight += 10
 	}
 
+	// Show the text width
+	page.PushGraphicsState()
+	page.SetStrokeColor(breakColor)
+	page.SetLineWidth(0.5)
+	page.MoveTo(leftMargin, 0)
+	page.LineTo(leftMargin, bottomMargin+visualHeight+topMargin)
+	page.MoveTo(leftMargin+e.TextWidth, 0)
+	page.LineTo(leftMargin+e.TextWidth, bottomMargin+visualHeight+topMargin)
+	page.Stroke()
+	page.PopGraphicsState()
+
 	x := float64(leftMargin)
 	y := bottomMargin + visualHeight
 	for i, box := range lineBoxes {
@@ -435,53 +454,99 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 
 		// draw the first few tokens after the linebreak, to illustrate
 		// the linebreak decision
-		pos := endIdx[i]
-		naturalWidth := 0.0
+		xx := xxx[i]
+		xEnd := xx[len(xx)-1]
+		xx = xx[:len(xx)-1]
+		x := xEnd
 		var extra []Box
-		for ; pos < len(hList); pos++ {
+		pos := startPos[i] + len(xx)
+		for pos < len(hList) {
+			xx = append(xx, x)
 			switch h := hList[pos].(type) {
 			case *hModeGlue:
-				glue := &h.GlueBox
-				naturalWidth += glue.Length
-				extra = append(extra, glue)
+				extra = append(extra, &h.Skip)
+				x += h.Length
 			case *hModeBox:
-				naturalWidth += h.width
 				extra = append(extra, h.Box)
-			case *hModePenalty:
-				naturalWidth += h.width
-			default:
-				panic(fmt.Sprintf("unexpected type %T in horizontal mode list", h))
+				x += h.width
 			}
-			if naturalWidth > 72 {
+			if x >= leftMargin+e.TextWidth+72 {
 				break
 			}
+			pos++
 		}
+		page.PushGraphicsState()
 		overflow := HBox(extra...)
 		ext = overflow.Extent()
-		page.PushGraphicsState()
-		w := ext.Width
-		if w > 72 {
-			w = 72
-		}
-		page.Rectangle(x+e.TextWidth, y-ext.Depth, w, ext.Height+ext.Depth)
+		page.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
 		page.ClipNonZero()
 		page.EndPath()
-		overflow.Draw(page, x+e.TextWidth, y)
+		overflow.Draw(page, xEnd, y)
 		page.SetGraphicsState("gs:t")
 		page.SetFillColor(color.RGB(1, 1, 1))
-		page.Rectangle(x+e.TextWidth, y-ext.Depth, w, ext.Height+ext.Depth)
+		page.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
 		page.Fill()
 		page.PopGraphicsState()
 
-		// add annotations about the badness of the line
-		if badness[i] != badnessDecent {
-			page.BeginText()
-			page.StartLine(x+e.TextWidth+10+72+10, y)
-			page.SetFont(F, 7)
-			page.SetFillColor(annotationColor)
-			page.ShowText(badness[i].String())
-			page.EndText()
+		// draw a little triangle for each potential breakpoint
+		page.PushGraphicsState()
+		page.SetFillColor(breakColor)
+		for j, x := range xx {
+			if !isValidBreakpoint(hList, startPos[i]+j) {
+				continue
+			}
+			page.MoveTo(x, y)
+			page.LineTo(x-1, y-3)
+			page.LineTo(x+1, y-3)
 		}
+		page.Fill()
+		page.PopGraphicsState()
+
+		// add the annotations
+		page.PushGraphicsState()
+		page.SetLineWidth(1.5)
+		page.SetStrokeColor(color.Gray(0.8))
+		page.MoveTo(leftMargin+e.TextWidth+72+0.5, 0)
+		page.LineTo(leftMargin+e.TextWidth+72+0.5, bottomMargin+visualHeight+topMargin)
+		page.Stroke()
+		page.SetLineWidth(0.5)
+		page.SetStrokeColor(annotationColor)
+		page.MoveTo(leftMargin+e.TextWidth+72, 0)
+		page.LineTo(leftMargin+e.TextWidth+72, bottomMargin+visualHeight+topMargin)
+		page.Stroke()
+		page.PopGraphicsState()
+
+		page.BeginText()
+		page.SetFont(F, 6)
+		page.SetFillColor(annotationColor)
+		page.StartLine(leftMargin+e.TextWidth+72+10, y+4)
+		total := measureWidth(lineContents[i])
+		page.ShowText(fmt.Sprintf("%+.1f", e.TextWidth-total.Length))
+		var r float64
+		if total.Length > e.TextWidth+0.05 {
+			r = (e.TextWidth - total.Length) / total.Minus.Val
+			label := fmt.Sprintf(" / %.1f (%.0f%%)", total.Minus.Val, -100*r)
+			if total.Plus.Order > 0 {
+				r = 0
+				label = " / inf"
+			}
+			page.ShowText(label)
+		} else if total.Length < e.TextWidth-0.05 {
+			r = (e.TextWidth - total.Length) / total.Plus.Val
+			label := fmt.Sprintf(" / %.1f (%.0f%%)", total.Plus.Val, 100*r)
+			if total.Plus.Order > 0 {
+				r = 0
+				label = " / inf"
+			}
+			page.ShowText(label)
+		}
+		page.StartNextLine(0, -7)
+		page.ShowTextAligned(fmt.Sprintf(" r = %.2f", r), 30, 0)
+		c := getFitnessClass(r)
+		if c != fitnessDecent {
+			page.ShowTextAligned(c.String(), 25, 1)
+		}
+		page.EndText()
 
 		y -= ext.Depth
 		y -= 10

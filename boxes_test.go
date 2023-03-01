@@ -21,5 +21,5 @@ var _ Box = &RuleBox{}
 var _ Box = VBox{}
 var _ Box = VTop{}
 var _ Box = Kern(0)
-var _ Box = &GlueBox{}
+var _ Box = &Skip{}
 var _ Box = &TextBox{}

@@ -77,88 +77,65 @@ func HBoxTo(width float64, contents ...Box) Box {
 	return res
 }
 
-func (obj *hBox) stretchTo(width float64) {
-	naturalWidth := 0.0
-	for _, child := range obj.Contents {
-		ext := child.Extent()
-		naturalWidth += ext.Width
-	}
-
-	if naturalWidth < width-1e-3 {
-		level := -1
-		var ii []int
-		stretchTotal := 0.0
-		for i, child := range obj.Contents {
-			stretch, ok := child.(stretcher)
-			if !ok {
-				continue
-			}
-			info := stretch.Stretch()
-
-			if info.Order > level {
-				level = info.Order
-				ii = nil
-				stretchTotal = 0
-			}
-			ii = append(ii, i)
-			stretchTotal += info.Val
-		}
-
-		if stretchTotal > 0 {
-			q := (width - naturalWidth) / stretchTotal
-			// glue can stretch beyond its natural width, if needed
-			for _, i := range ii {
-				child := obj.Contents[i]
-				ext := child.Extent()
-				amount := ext.Width + child.(stretcher).Stretch().Val*q
-				obj.Contents[i] = Kern(amount)
-			}
-		}
-	} else if naturalWidth > width+1e-3 {
-		level := -1
-		var ii []int
-		shrinkTotal := 0.0
-		for i, child := range obj.Contents {
-			shrink, ok := child.(shrinker)
-			if !ok {
-				continue
-			}
-			info := shrink.Shrink()
-
-			if info.Order > level {
-				level = info.Order
-				ii = nil
-				shrinkTotal = 0
-			}
-			ii = append(ii, i)
-			shrinkTotal += info.Val
-		}
-
-		if shrinkTotal > 0 {
-			q := (naturalWidth - width) / shrinkTotal
-			if level == 0 && q > 1 {
-				// glue can't shrink beyond its minimum width
-				q = 1
-			}
-			for _, i := range ii {
-				child := obj.Contents[i]
-				ext := child.Extent()
-				amount := ext.Width - child.(shrinker).Shrink().Val*q
-				obj.Contents[i] = Kern(amount)
-			}
-		}
+// Draw implements the Box interface.
+func (obj *hBox) Draw(page *graphics.Page, xPos, yPos float64) {
+	xx := horizontalLayout(xPos, obj.Width, obj.Contents...)
+	for i, box := range obj.Contents {
+		box.Draw(page, xx[i], yPos)
 	}
 }
 
-// Draw implements the Box interface.
-func (obj *hBox) Draw(page *graphics.Page, xPos, yPos float64) {
-	// TODO(voss): don't modify the hBox contents
-	obj.stretchTo(obj.Width)
-
-	x := xPos
-	for _, child := range obj.Contents {
-		ext := child.Extent()
-		child.Draw(page, x, yPos)
-		x += ext.Width
+func horizontalLayout(x, width float64, boxes ...Box) []float64 {
+	xx := make([]float64, 0, len(boxes))
+	total := measureWidth(boxes)
+	if total.Length < width-1e-3 && total.Plus.Val > 0 {
+		// contents are too narrow, stretch all glue
+		q := (width - total.Length) / total.Plus.Val
+		for _, box := range boxes {
+			xx = append(xx, x)
+			x += box.Extent().Width + q*getStretch(box, total.Plus.Order)
+		}
+	} else if total.Length > width+1e-3 && total.Minus.Val > 0 {
+		// contents are too wide, shrink all glue
+		q := (total.Length - width) / total.Minus.Val
+		if total.Minus.Order == 0 && q > 1 {
+			// glue can't shrink beyond its minimum width
+			q = 1
+		}
+		for _, box := range boxes {
+			xx = append(xx, x)
+			x += box.Extent().Width - q*getShrink(box, total.Minus.Order)
+		}
+	} else {
+		// lay out contents at their natural width
+		for _, box := range boxes {
+			xx = append(xx, x)
+			x += box.Extent().Width
+		}
 	}
+	return xx
+}
+
+func getStretch(box Box, order int) float64 {
+	stretch, ok := box.(stretcher)
+	if !ok {
+		return 0
+	}
+	info := stretch.Stretch()
+	if info.Order != order {
+		return 0
+	}
+	return info.Val
+}
+
+func getShrink(box Box, order int) float64 {
+	shrink, ok := box.(shrinker)
+	if !ok {
+		return 0
+	}
+	info := shrink.Shrink()
+	if info.Order != order {
+		return 0
+	}
+	return info.Val
 }
