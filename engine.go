@@ -1,7 +1,7 @@
 package layout
 
 import (
-	"strings"
+	"unicode"
 
 	"seehuhn.de/go/pdf/color"
 	"seehuhn.de/go/pdf/font"
@@ -36,7 +36,9 @@ type Engine struct {
 	// Elements can be of the following types:
 	//   *hModeGlue
 	//   *hModeText
-	HList []interface{}
+	HList      []interface{}
+	AfterPunct bool
+	AfterSpace bool
 
 	VList     []Box
 	PrevDepth float64
@@ -60,7 +62,7 @@ type Engine struct {
 	AfterPageFunc func(*Engine, *graphics.Page) error
 }
 
-func (e *Engine) HAddText(F *FontInfo, par string) {
+func (e *Engine) HAddText(F *FontInfo, text string) {
 	space := F.Font.Layout([]rune{' '})
 	var spaceWidth funit.Int
 	if len(space) == 1 && space[0].Gid != 0 {
@@ -74,31 +76,28 @@ func (e *Engine) HAddText(F *FontInfo, par string) {
 	spaceGlue := &hModeGlue{
 		Skip: Skip{
 			Length:  pdfSpaceWidth,
-			Stretch: stretchAmount{Val: pdfSpaceWidth / 2},
-			Shrink:  stretchAmount{Val: pdfSpaceWidth / 3},
+			Stretch: glueAmount{Val: pdfSpaceWidth / 2},
+			Shrink:  glueAmount{Val: pdfSpaceWidth / 3},
 		},
 		Text: " ",
 	}
 	xSpaceGlue := &hModeGlue{
 		Skip: Skip{
 			Length:  1.5 * pdfSpaceWidth,
-			Stretch: stretchAmount{Val: pdfSpaceWidth * 1.5},
-			Shrink:  stretchAmount{Val: pdfSpaceWidth},
+			Stretch: glueAmount{Val: pdfSpaceWidth * 1.5},
+			Shrink:  glueAmount{Val: pdfSpaceWidth},
 		},
 		Text: " ",
 	}
-
-	endOfSentence := false
-	for i, f := range strings.Fields(par) {
-		if i > 0 {
-			if endOfSentence {
-				e.HList = append(e.HList, xSpaceGlue)
-				endOfSentence = false
-			} else {
-				e.HList = append(e.HList, spaceGlue)
-			}
+	addSpace := func() {
+		if e.AfterPunct {
+			e.HList = append(e.HList, xSpaceGlue)
+		} else {
+			e.HList = append(e.HList, spaceGlue)
 		}
-		gg := F.Font.Typeset(f, F.Size)
+	}
+	addRunes := func(rr []rune) {
+		gg := F.Font.Layout(rr)
 		box := &TextBox{
 			F:      F,
 			Glyphs: gg,
@@ -108,6 +107,42 @@ func (e *Engine) HAddText(F *FontInfo, par string) {
 			width: F.Font.ToPDF(F.Size, gg.AdvanceWidth()),
 		})
 	}
+
+	var run []rune
+	for _, r := range text {
+		if r == 0x200B { // ZERO WIDTH SPACE
+			if len(run) > 0 {
+				addRunes(run)
+				run = run[:0]
+			}
+			e.HList = append(e.HList, &hModePenalty{})
+		} else if unicode.IsSpace(r) &&
+			r != 0x00A0 && // NO-BREAK SPACE
+			r != 0x2007 && // FIGURE SPACE
+			r != 0x202F { // NARROW NO-BREAK SPACE
+			if len(run) > 0 {
+				addRunes(run)
+				run = run[:0]
+			}
+			if !e.AfterSpace {
+				addSpace()
+			}
+			e.AfterSpace = true
+			e.AfterPunct = false
+		} else {
+			run = append(run, r)
+			e.AfterSpace = false
+			e.AfterPunct = r == '.' || r == '!' || r == '?'
+		}
+	}
+	if len(run) > 0 {
+		addRunes(run)
+	}
+}
+
+// HAddGlue adds a glue item to the horizontal mode list.
+func (e *Engine) HAddGlue(g *Skip) {
+	e.HList = append(e.HList, &hModeGlue{Skip: *g})
 }
 
 func (e *Engine) VAddBox(b Box) {

@@ -22,6 +22,8 @@ func (e *Engine) EndParagraph() {
 	hList = append(hList, &hModePenalty{Penalty: PenaltyForceBreak})
 
 	e.HList = e.HList[:0]
+	e.AfterPunct = false
+	e.AfterSpace = false
 
 	lineWidth := &Skip{Length: e.TextWidth}
 	lineWidth = lineWidth.Minus(e.LeftSkip).Minus(e.RightSkip)

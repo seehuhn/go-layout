@@ -589,7 +589,7 @@ func format(x float64) string {
 	return fmt.Sprintf("%.3f", x)
 }
 
-func formatS(x stretchAmount) string {
+func formatS(x glueAmount) string {
 	unit := ""
 	if x.Order > 0 {
 		unit = "fi" + strings.Repeat("l", x.Order)

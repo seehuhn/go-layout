@@ -3,8 +3,6 @@ package layout
 import (
 	"fmt"
 	"math"
-
-	"golang.org/x/exp/slices"
 )
 
 type knuthPlassLineBreaker struct {
@@ -19,6 +17,8 @@ type knuthPlassLineBreaker struct {
 
 	active []*knuthPlassNode
 	total  *Skip
+
+	scratch *Skip
 }
 
 type knuthPlassNode struct {
@@ -34,6 +34,7 @@ func (br *knuthPlassLineBreaker) Run() []int {
 	start := &knuthPlassNode{total: &Skip{}}
 	br.active = append(br.active[:0], start)
 	br.total = &Skip{}
+	br.scratch = &Skip{}
 
 	for b := 0; b < len(br.hList); b++ {
 		if isValidBreakpoint(br.hList, b) {
@@ -107,7 +108,10 @@ func (br *knuthPlassLineBreaker) Run() []int {
 							totalDemerits: Dc[c+1],
 							previous:      Ac[c+1],
 						}
-						br.active = slices.Insert(br.active, aIdx, s)
+						// br.active = slices.Insert(br.active, aIdx, s)
+						br.active = append(br.active, nil)
+						copy(br.active[aIdx+1:], br.active[aIdx:])
+						br.active[aIdx] = s
 						aIdx++
 					}
 				}
@@ -162,13 +166,13 @@ func (br *knuthPlassLineBreaker) Run() []int {
 
 func (br *knuthPlassLineBreaker) computeDemerits(r float64, pb float64, a *knuthPlassNode, b int, c fitnessClass) float64 {
 	var d float64
-	r3 := 1 + 100*math.Pow(math.Abs(r), 3)
+	r3 := 1 + 100*pow3(math.Abs(r))
 	if pb >= 0 {
-		d = math.Pow(r3+float64(pb), 2)
+		d = pow2(r3 + float64(pb))
 	} else if pb != PenaltyForceBreak {
-		d = math.Pow(r3, 2) - math.Pow(float64(pb), 2)
+		d = pow2(r3) - pow2(float64(pb))
 	} else {
-		d = math.Pow(r3, 2)
+		d = pow2(r3)
 	}
 	if br.IsFlagged(a.pos) && br.IsFlagged(b) {
 		d += br.α
@@ -178,6 +182,14 @@ func (br *knuthPlassLineBreaker) computeDemerits(r float64, pb float64, a *knuth
 	}
 	d += a.totalDemerits
 	return d
+}
+
+func pow2(x float64) float64 {
+	return x * x
+}
+
+func pow3(x float64) float64 {
+	return x * x * x
 }
 
 func isValidBreakpoint(hList []interface{}, pos int) bool {
@@ -207,28 +219,28 @@ func (br *knuthPlassLineBreaker) IsFlagged(pos int) bool {
 }
 
 func (br *knuthPlassLineBreaker) AdjustmentRatio(a *knuthPlassNode, b int) float64 {
-	needed := br.total.Minus(a.total)
+	br.scratch.SetMinus(br.total, a.total)
 	if p, isPenalty := br.hList[b].(*hModePenalty); isPenalty {
-		needed.Length += p.width
+		br.scratch.Length += p.width
 	}
 	available := br.lineWidth(a.line)
-	excess := needed.Minus(available)
-	if excess.Length < -1e-3 { // loose line
-		stretch := excess.Stretch
+	br.scratch.SetMinus(br.scratch, available)
+	if br.scratch.Length < -1e-3 { // loose line
+		stretch := br.scratch.Stretch
 		if stretch.Order > 0 {
 			return 0
 		}
 		if stretch.Val > 0 {
-			return -excess.Length / stretch.Val
+			return -br.scratch.Length / stretch.Val
 		}
 		return math.Inf(+1)
-	} else if excess.Length > 1e-3 { // tight line
-		shrink := excess.Shrink
+	} else if br.scratch.Length > 1e-3 { // tight line
+		shrink := br.scratch.Shrink
 		if shrink.Order > 0 {
 			return 0
 		}
 		if shrink.Val > 0 {
-			return -excess.Length / shrink.Val
+			return -br.scratch.Length / shrink.Val
 		}
 		return math.Inf(+1)
 	}

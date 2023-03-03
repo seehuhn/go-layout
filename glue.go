@@ -23,11 +23,11 @@ import (
 )
 
 type stretcher interface {
-	GetStretch() stretchAmount
+	GetStretch() glueAmount
 }
 
 type shrinker interface {
-	GetShrink() stretchAmount
+	GetShrink() glueAmount
 }
 
 // Glue returns a new "glue" box with the given natural length and
@@ -35,15 +35,15 @@ type shrinker interface {
 func Glue(length float64, plus float64, plusLevel int, minus float64, minusLevel int) *Skip {
 	return &Skip{
 		Length:  length,
-		Stretch: stretchAmount{plus, plusLevel},
-		Shrink:  stretchAmount{minus, minusLevel},
+		Stretch: glueAmount{plus, plusLevel},
+		Shrink:  glueAmount{minus, minusLevel},
 	}
 }
 
 type Skip struct {
 	Length  float64
-	Stretch stretchAmount
-	Shrink  stretchAmount
+	Stretch glueAmount
+	Shrink  glueAmount
 }
 
 func (g *Skip) Plus(other *Skip) *Skip {
@@ -54,6 +54,25 @@ func (g *Skip) Plus(other *Skip) *Skip {
 		Length:  g.Length + other.Length,
 		Stretch: g.Stretch.Plus(other.Stretch),
 		Shrink:  g.Shrink.Plus(other.Shrink),
+	}
+}
+
+// SetMinus sets g to a-b.
+func (g *Skip) SetMinus(a, b *Skip) {
+	g.Length = a.Length - b.Length
+	if a.Stretch.Order > b.Stretch.Order {
+		g.Stretch = a.Stretch
+	} else if a.Stretch.Order < b.Stretch.Order {
+		g.Stretch = glueAmount{-b.Stretch.Val, b.Stretch.Order}
+	} else {
+		g.Stretch = glueAmount{a.Stretch.Val - b.Stretch.Val, a.Stretch.Order}
+	}
+	if a.Shrink.Order > b.Shrink.Order {
+		g.Shrink = a.Shrink
+	} else if a.Shrink.Order < b.Shrink.Order {
+		g.Shrink = glueAmount{-b.Shrink.Val, b.Shrink.Order}
+	} else {
+		g.Shrink = glueAmount{a.Shrink.Val - b.Shrink.Val, a.Shrink.Order}
 	}
 }
 
@@ -106,11 +125,11 @@ func (obj *Skip) Extent() *BoxExtent {
 
 func (obj *Skip) Draw(page *graphics.Page, xPos, yPos float64) {}
 
-func (obj *Skip) GetStretch() stretchAmount {
+func (obj *Skip) GetStretch() glueAmount {
 	return obj.Stretch
 }
 
-func (obj *Skip) GetShrink() stretchAmount {
+func (obj *Skip) GetShrink() glueAmount {
 	return obj.Shrink
 }
 
@@ -161,12 +180,12 @@ func measureWidth(boxes []Box) *Skip {
 	return res
 }
 
-type stretchAmount struct {
+type glueAmount struct {
 	Val   float64
 	Order int
 }
 
-func (s *stretchAmount) IncrementBy(other stretchAmount) {
+func (s *glueAmount) IncrementBy(other glueAmount) {
 	if other.Order > s.Order {
 		s.Val = other.Val
 		s.Order = other.Order
@@ -175,38 +194,38 @@ func (s *stretchAmount) IncrementBy(other stretchAmount) {
 	}
 }
 
-func (s *stretchAmount) Plus(other stretchAmount) stretchAmount {
+func (s *glueAmount) Plus(other glueAmount) glueAmount {
 	if other.Order == s.Order {
-		return stretchAmount{
+		return glueAmount{
 			Val:   s.Val + other.Val,
 			Order: s.Order,
 		}
 	} else if other.Order > s.Order {
-		return stretchAmount{
+		return glueAmount{
 			Val:   other.Val,
 			Order: other.Order,
 		}
 	} else { // other.Order < s.Order
-		return stretchAmount{
+		return glueAmount{
 			Val:   s.Val,
 			Order: s.Order,
 		}
 	}
 }
 
-func (s *stretchAmount) Minus(other stretchAmount) stretchAmount {
+func (s *glueAmount) Minus(other glueAmount) glueAmount {
 	if other.Order == s.Order {
-		return stretchAmount{
+		return glueAmount{
 			Val:   s.Val - other.Val,
 			Order: s.Order,
 		}
 	} else if other.Order > s.Order {
-		return stretchAmount{
+		return glueAmount{
 			Val:   -other.Val,
 			Order: other.Order,
 		}
 	} else { // other.Order < s.Order
-		return stretchAmount{
+		return glueAmount{
 			Val:   s.Val,
 			Order: s.Order,
 		}

@@ -3,10 +3,13 @@ module seehuhn.de/go/layout
 go 1.19
 
 require (
-	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2
 	golang.org/x/text v0.7.0
-	seehuhn.de/go/pdf v0.1.1-0.20230301142732-4f3424aed857
-	seehuhn.de/go/sfnt v0.0.0-20230221152810-19ee833c296e
+	seehuhn.de/go/pdf v0.1.1-0.20230303180017-b8891ca4a0de
+	seehuhn.de/go/sfnt v0.0.0-20230303175840-8ba52fbc4bee
 )
 
-require seehuhn.de/go/dijkstra v0.9.3 // indirect
+require (
+	golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2 // indirect
+	seehuhn.de/go/dag v0.0.0-20230228001113-19b4e3c37e21 // indirect
+	seehuhn.de/go/dijkstra v0.9.3 // indirect
+)
