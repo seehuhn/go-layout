@@ -59,7 +59,7 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float
 	}
 	visualHeight := vPos[len(vPos)-1]
 
-	page, err := graphics.NewPage(tree.Out)
+	page, err := pages.NewPage(tree.Out)
 	if err != nil {
 		return err
 	}
@@ -94,7 +94,7 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float
 			page.Fill()
 			page.PopGraphicsState()
 
-			box.Draw(page, leftMargin, yBase)
+			box.Draw(page.Page, leftMargin, yBase)
 		}
 
 		// show the box types
@@ -420,7 +420,7 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 	// Now we have gathered all the lines.
 	// Create a page which shows the line breaks.
 
-	page, err := graphics.NewPage(tree.Out)
+	page, err := pages.NewPage(tree.Out)
 	if err != nil {
 		return err
 	}
@@ -453,7 +453,7 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 		y -= ext.Height
 
 		// draw the line
-		box.Draw(page, x, y)
+		box.Draw(page.Page, x, y)
 
 		// draw the first few tokens after the linebreak, to illustrate
 		// the linebreak decision
@@ -484,8 +484,8 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
 		page.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
 		page.ClipNonZero()
 		page.EndPath()
-		overflow.Draw(page, xEnd, y)
-		page.SetGraphicsState("gs:t")
+		overflow.Draw(page.Page, xEnd, y)
+		page.SetExtGState("gs:t")
 		page.SetFillColor(color.RGB(1, 1, 1))
 		page.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
 		page.Fill()

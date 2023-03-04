@@ -7,7 +7,6 @@ import (
 	"golang.org/x/text/language"
 	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/font/simple"
-	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/pdf/pages"
 )
 
@@ -44,16 +43,16 @@ func TestLineBreaks(t *testing.T) {
 		MediaBox: pages.A4,
 	})
 
-	gr, err := graphics.AppendPage(pageTree)
+	page, err := pages.AppendPage(pageTree)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	paragraph := VTop(e.VList)
 
-	paragraph.Draw(gr, 72, 25/2.54*72)
+	paragraph.Draw(page.Page, 72, 25/2.54*72)
 
-	_, err = gr.Close()
+	_, err = page.Close()
 	if err != nil {
 		t.Fatal(err)
 	}

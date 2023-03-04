@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 
-	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/pdf/pages"
 )
 
@@ -16,15 +15,15 @@ func (e *Engine) AppendPage(tree *pages.Tree, height float64) error {
 
 	e.PageNumber++
 
-	page, err := graphics.AppendPage(tree)
+	page, err := pages.AppendPage(tree)
 	if err != nil {
 		return nil
 	}
 
-	vbox.Draw(page, 72, 72) // TODO(voss): make the margins configurable
+	vbox.Draw(page.Page, 72, 72) // TODO(voss): make the margins configurable
 
 	if e.AfterPageFunc != nil {
-		err = e.AfterPageFunc(e, page)
+		err = e.AfterPageFunc(e, page.Page)
 		if err != nil {
 			return err
 		}
