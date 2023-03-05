@@ -3,8 +3,6 @@ package layout
 import (
 	"unicode"
 
-	"seehuhn.de/go/pdf/color"
-	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/sfnt/funit"
 )
@@ -155,12 +153,6 @@ func (e *Engine) VAddBox(b Box) {
 	}
 	e.VList = append(e.VList, b)
 	e.PrevDepth = ext.Depth
-}
-
-type FontInfo struct {
-	Font  *font.Font
-	Size  float64
-	Color color.Color
 }
 
 type Penalty float64

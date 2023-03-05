@@ -21,6 +21,7 @@ import (
 	"math"
 
 	"seehuhn.de/go/pdf/color"
+	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/sfnt/glyph"
 )
@@ -45,9 +46,8 @@ func (obj BoxExtent) String() string {
 	return fmt.Sprintf("%gx%g%+g%s", obj.Width, obj.Height, obj.Depth, extra)
 }
 
-// Extent implements the Box interface.
-// This allows for objects to embed a BoxExtent in order to implement the
-// part of the Box interface.
+// Extent allows for objects to embed a BoxExtent in order to implement part of
+// the Box interface.
 func (obj *BoxExtent) Extent() *BoxExtent {
 	return obj
 }
@@ -98,6 +98,12 @@ type TextBox struct {
 	Glyphs glyph.Seq
 }
 
+type FontInfo struct {
+	Font  *font.Font
+	Size  float64
+	Color color.Color
+}
+
 // Text returns a new Text object.
 func Text(F *FontInfo, text string) *TextBox {
 	return &TextBox{
@@ -133,14 +139,6 @@ func (obj *TextBox) Extent() *BoxExtent {
 		if thisHeight > height {
 			height = thisHeight
 		}
-	}
-
-	// TODO(voss): is the following wise?
-	if x := font.Ascent.AsFloat(q); height < x {
-		height = x
-	}
-	if x := -font.Descent.AsFloat(q); depth < x {
-		depth = x
 	}
 
 	return &BoxExtent{
