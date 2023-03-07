@@ -4,6 +4,8 @@ golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2/go.mod h1:CxIveKay+FTh1D0yPZ
 golang.org/x/image v0.3.0 h1:HTDXbdK9bjfSWkPzDJIw89W8CAtfFGduujWs33NLLsg=
 golang.org/x/text v0.7.0 h1:4BRB4x83lYWy72KwLD/qYDuTu7q9PjSagHvijDw7cLo=
 golang.org/x/text v0.7.0/go.mod h1:mrYo+phRRbMaCq/xk9113O4dZlRixOauAjOtrjsXDZ8=
+golang.org/x/text v0.8.0 h1:57P1ETyNKtuIjB4SRd15iJxuhj8Gc416Y78H3qgMh68=
+golang.org/x/text v0.8.0/go.mod h1:e1OnstbJyHTd6l/uOt8jFFHp6TRDWZR/bV3emEE/zU8=
 seehuhn.de/go/dag v0.0.0-20230228001113-19b4e3c37e21 h1:lxbISEHVNtjW+p0IJAYNq40VWTv7XAdR0xReesN+rsk=
 seehuhn.de/go/dag v0.0.0-20230228001113-19b4e3c37e21/go.mod h1:se0NAaAL9aI9pRBRK0EvlY3572GJTsF0J7RwMXEiKz4=
 seehuhn.de/go/dijkstra v0.9.3 h1:uVbFjlAuhlwV45qM7S4Wz+C7XlfbgAaTfcZX1r8OgIA=
@@ -12,6 +14,8 @@ seehuhn.de/go/pdf v0.1.1-0.20230301142732-4f3424aed857 h1:g3o76nYDt45trQaCzvbwf1
 seehuhn.de/go/pdf v0.1.1-0.20230301142732-4f3424aed857/go.mod h1:3ZswG00MIkm9JvGR+8cgvMnzJ/Oe2itEo/cEAK1aLEU=
 seehuhn.de/go/pdf v0.1.1-0.20230303180017-b8891ca4a0de h1:QzDmHUGIoftvODuc4mZnYuO/KXwl+0NawX2Q7w92hsI=
 seehuhn.de/go/pdf v0.1.1-0.20230303180017-b8891ca4a0de/go.mod h1:YWmh6HbDqpoS/OgnpoAIMsCt5DbkmJWFVE4xstJu9OM=
+seehuhn.de/go/pdf v0.1.1-0.20230307130417-85078ae5711f h1:8ujg46sBbM+totLIGqZkPg8xGn9LINl7TEv8kaqocMU=
+seehuhn.de/go/pdf v0.1.1-0.20230307130417-85078ae5711f/go.mod h1:YWmh6HbDqpoS/OgnpoAIMsCt5DbkmJWFVE4xstJu9OM=
 seehuhn.de/go/sfnt v0.0.0-20230221152810-19ee833c296e h1:shpzvLLfxUTct8L/ouPGSC0GhyeUX/Cie0S0Ut4Kzak=
 seehuhn.de/go/sfnt v0.0.0-20230221152810-19ee833c296e/go.mod h1:RKgZDBBqBN+2fWeDy9XCo7h43c/oKLcoNORfiGDVek4=
 seehuhn.de/go/sfnt v0.0.0-20230303175840-8ba52fbc4bee h1:5A2581L3K4EjLdrA6GLWwv3sIwgIl5SPs5Belvnvf10=

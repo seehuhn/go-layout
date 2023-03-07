@@ -3,8 +3,8 @@ module seehuhn.de/go/layout
 go 1.19
 
 require (
-	golang.org/x/text v0.7.0
-	seehuhn.de/go/pdf v0.1.1-0.20230303180017-b8891ca4a0de
+	golang.org/x/text v0.8.0
+	seehuhn.de/go/pdf v0.1.1-0.20230307130417-85078ae5711f
 	seehuhn.de/go/sfnt v0.0.0-20230303175840-8ba52fbc4bee
 )
 
