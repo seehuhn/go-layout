@@ -99,7 +99,7 @@ type TextBox struct {
 }
 
 type FontInfo struct {
-	Font  *font.Font
+	Font  font.Embedded
 	Size  float64
 	Color color.Color
 }
@@ -108,14 +108,15 @@ type FontInfo struct {
 func Text(F *FontInfo, text string) *TextBox {
 	return &TextBox{
 		F:      F,
-		Glyphs: F.Font.Typeset(text, F.Size),
+		Glyphs: F.Font.Layout(text, F.Size),
 	}
 }
 
 // Extent implements the Box interface
 func (obj *TextBox) Extent() *BoxExtent {
 	font := obj.F.Font
-	q := obj.F.Size / float64(font.UnitsPerEm)
+	geom := font.GetGeometry()
+	q := obj.F.Size / float64(geom.UnitsPerEm)
 
 	width := 0.0
 	height := math.Inf(-1)
@@ -123,10 +124,10 @@ func (obj *TextBox) Extent() *BoxExtent {
 	for _, glyph := range obj.Glyphs {
 		width += glyph.Advance.AsFloat(q)
 
-		thisDepth := font.Descent.AsFloat(q)
-		thisHeight := font.Ascent.AsFloat(q)
-		if font.GlyphExtents != nil {
-			bbox := &font.GlyphExtents[glyph.Gid]
+		thisDepth := geom.Descent.AsFloat(q)
+		thisHeight := geom.Ascent.AsFloat(q)
+		if geom.GlyphExtents != nil {
+			bbox := &geom.GlyphExtents[glyph.Gid]
 			if bbox.IsZero() {
 				continue
 			}

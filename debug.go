@@ -12,7 +12,7 @@ import (
 	"seehuhn.de/go/pdf/pages"
 )
 
-func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float64) error {
+func (e *Engine) VisualisePageBreak(tree *pages.Tree, F font.Embedded, height float64) error {
 	const (
 		overshot     = 1.4
 		glueHeight   = 12
@@ -325,7 +325,7 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F *font.Font, height float
 	return nil
 }
 
-func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F *font.Font) error {
+func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F font.Embedded) error {
 	// This must match the code in [Engine.EndParagraph]
 
 	const (

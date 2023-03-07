@@ -19,17 +19,22 @@ func TestLineBreaks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	F1, err := simple.EmbedFile(out, "../otf/SourceSerif4-Regular.otf", "F1",
+	FF1, err := simple.LoadFont("../otf/SourceSerif4-Regular.otf",
 		language.BritishEnglish)
 	if err != nil {
 		t.Fatal(err)
 	}
+	F1, err := FF1.Embed(out, "F1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	geom := F1.GetGeometry()
 
 	e := &Engine{
 		TextWidth:    hSize,
 		RightSkip:    &Skip{Stretch: glueAmount{Val: 36, Order: 0}},
 		ParFillSkip:  Glue(0, 1, 1, 0, 0),
-		BaseLineSkip: F1.ToPDF16(fontSize, F1.BaseLineSkip),
+		BaseLineSkip: geom.ToPDF16(fontSize, geom.BaseLineSkip),
 	}
 
 	e.HAddText(&FontInfo{Font: F1, Size: 10}, testText)

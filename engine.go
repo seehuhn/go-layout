@@ -61,15 +61,16 @@ type Engine struct {
 }
 
 func (e *Engine) HAddText(F *FontInfo, text string) {
-	space := F.Font.Layout([]rune{' '})
+	geom := F.Font.GetGeometry()
+	space := F.Font.Layout(" ", F.Size)
 	var spaceWidth funit.Int
 	if len(space) == 1 && space[0].Gid != 0 {
 		spaceWidth = funit.Int(space[0].Advance)
 	} else {
 		space = nil
-		spaceWidth = funit.Int(F.Font.UnitsPerEm / 4)
+		spaceWidth = funit.Int(geom.UnitsPerEm / 4)
 	}
-	pdfSpaceWidth := F.Font.ToPDF(F.Size, spaceWidth)
+	pdfSpaceWidth := geom.ToPDF(F.Size, spaceWidth)
 
 	spaceGlue := &hModeGlue{
 		Skip: Skip{
@@ -95,14 +96,14 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 		}
 	}
 	addRunes := func(rr []rune) {
-		gg := F.Font.Layout(rr)
+		gg := F.Font.Layout(string(rr), F.Size)
 		box := &TextBox{
 			F:      F,
 			Glyphs: gg,
 		}
 		e.HList = append(e.HList, &hModeBox{
 			Box:   box,
-			width: F.Font.ToPDF(F.Size, gg.AdvanceWidth()),
+			width: geom.ToPDF(F.Size, gg.AdvanceWidth()),
 		})
 	}
 
