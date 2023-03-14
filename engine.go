@@ -46,17 +46,6 @@ type hModePenalty struct {
 }
 
 type Engine struct {
-	// The list of HList in the horizontal mode.
-	// Elements can be of the following types:
-	//   *hModeGlue
-	//   *hModeText
-	HList      []interface{}
-	AfterPunct bool
-	AfterSpace bool
-
-	VList     []Box
-	PrevDepth float64
-
 	TextWidth   float64
 	LeftSkip    *Skip
 	RightSkip   *Skip
@@ -65,15 +54,21 @@ type Engine struct {
 	TopSkip      float64
 	BottomGlue   *Skip
 	BaseLineSkip float64
-	ParSkip      *Skip // TODO(voss)
+	ParSkip      *Skip
 
 	InterLinePenalty float64
 	ClubPenalty      float64
 	WidowPenalty     float64
 
-	PageNumber int
-
+	PageNumber    int
 	AfterPageFunc func(*Engine, *graphics.Page) error
+
+	hList      []interface{} // list of hModeBox, hModeGlue, hModePenalty
+	afterPunct bool
+	afterSpace bool
+
+	VList     []Box // TODO(voss): unexport this
+	prevDepth float64
 }
 
 func (e *Engine) HAddText(F *FontInfo, text string) {
@@ -105,10 +100,10 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 		Text: " ",
 	}
 	addSpace := func() {
-		if e.AfterPunct {
-			e.HList = append(e.HList, xSpaceGlue)
+		if e.afterPunct {
+			e.hList = append(e.hList, xSpaceGlue)
 		} else {
-			e.HList = append(e.HList, spaceGlue)
+			e.hList = append(e.hList, spaceGlue)
 		}
 	}
 	addRunes := func(rr []rune) {
@@ -117,7 +112,7 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 			F:      F,
 			Glyphs: gg,
 		}
-		e.HList = append(e.HList, &hModeBox{
+		e.hList = append(e.hList, &hModeBox{
 			Box:   box,
 			width: geom.ToPDF(F.Size, gg.AdvanceWidth()),
 		})
@@ -130,7 +125,7 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 				addRunes(run)
 				run = run[:0]
 			}
-			e.HList = append(e.HList, &hModePenalty{})
+			e.hList = append(e.hList, &hModePenalty{})
 		} else if unicode.IsSpace(r) &&
 			r != 0x00A0 && // NO-BREAK SPACE
 			r != 0x2007 && // FIGURE SPACE
@@ -139,15 +134,15 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 				addRunes(run)
 				run = run[:0]
 			}
-			if !e.AfterSpace {
+			if !e.afterSpace {
 				addSpace()
 			}
-			e.AfterSpace = true
-			e.AfterPunct = false
+			e.afterSpace = true
+			e.afterPunct = false
 		} else {
 			run = append(run, r)
-			e.AfterSpace = false
-			e.AfterPunct = r == '.' || r == '!' || r == '?'
+			e.afterSpace = false
+			e.afterPunct = r == '.' || r == '!' || r == '?'
 		}
 	}
 	if len(run) > 0 {
@@ -157,29 +152,27 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 
 // HAddGlue adds a glue item to the horizontal mode list.
 func (e *Engine) HAddGlue(g *Skip) {
-	e.HList = append(e.HList, &hModeGlue{Skip: *g})
+	e.hList = append(e.hList, &hModeGlue{Skip: *g})
 }
 
 func (e *Engine) VAddBox(b Box) {
 	ext := b.Extent()
 	if len(e.VList) > 0 {
-		gap := ext.Height + e.PrevDepth
+		gap := ext.Height + e.prevDepth
 		if gap+0.001 < e.BaseLineSkip {
 			e.VList = append(e.VList, Kern(e.BaseLineSkip-gap))
 		}
 	}
 	e.VList = append(e.VList, b)
-	e.PrevDepth = ext.Depth
+	e.prevDepth = ext.Depth
 }
 
-type Penalty float64
+type penalty float64
 
-func (obj Penalty) Extent() *BoxExtent {
-	return &BoxExtent{
-		WhiteSpaceOnly: true,
-	}
+func (obj penalty) Extent() *BoxExtent {
+	return &BoxExtent{WhiteSpaceOnly: true}
 }
 
-func (obj Penalty) Draw(page *graphics.Page, xPos, yPos float64) {
+func (obj penalty) Draw(page *graphics.Page, xPos, yPos float64) {
 	// pass
 }

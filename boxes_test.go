@@ -17,8 +17,8 @@
 package layout
 
 // compile-time test: we implement the Box interface
-var _ Box = &RuleBox{}
-var _ Box = VBox{}
+var _ Box = &ruleBox{}
+var _ Box = &vBox2{}
 var _ Box = VTop{}
 var _ Box = Kern(0)
 var _ Box = &Skip{}

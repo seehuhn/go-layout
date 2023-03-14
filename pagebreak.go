@@ -101,7 +101,7 @@ func (e *Engine) MakePage(height float64) Box {
 type vCandidate struct {
 	pos     int
 	badness float64
-	penalty Penalty
+	penalty penalty
 }
 
 func (e *Engine) vGetCandidates(height float64) []vCandidate {
@@ -134,7 +134,7 @@ func (e *Engine) vGetCandidates(height float64) []vCandidate {
 			break
 		}
 
-		penalty, isPenalty := box.(Penalty)
+		penalty, isPenalty := box.(penalty)
 
 		if e.vCanBreak(i) && !math.IsInf(float64(penalty), +1) {
 			var badness float64
@@ -211,7 +211,7 @@ func (e *Engine) vCanBreak(pos int) bool {
 			return followedByGlue
 		}
 		return false
-	case Penalty: // at a penalty
+	case penalty: // at a penalty
 		return float64(obj) < PenaltyPreventBreak
 	default:
 		return false
@@ -221,3 +221,12 @@ func (e *Engine) vCanBreak(pos int) bool {
 func vDiscardible(box Box) bool {
 	return box.Extent().WhiteSpaceOnly
 }
+
+func (e *Engine) VAddPenalty(p float64) {
+	e.VList = append(e.VList, penalty(p))
+}
+
+var (
+	PenaltyPreventBreak = math.Inf(+1)
+	PenaltyForceBreak   = math.Inf(-1)
+)

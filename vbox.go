@@ -20,56 +20,6 @@ import (
 	"seehuhn.de/go/pdf/graphics"
 )
 
-// VBox represents a Box which contains a column of sub-objects.
-// The base point is the base point of the last box.
-type VBox []Box
-
-func (vbox VBox) Extent() *BoxExtent {
-	height := 0.0
-	depth := 0.0
-	width := 0.0
-	for i, child := range vbox {
-		ext := child.Extent()
-		if !ext.WhiteSpaceOnly && ext.Width > width {
-			width = ext.Width
-		}
-
-		height += ext.Height
-		if i < len(vbox)-1 {
-			height += ext.Depth
-		} else {
-			depth = ext.Depth
-		}
-	}
-	return &BoxExtent{
-		Height: height,
-		Depth:  depth,
-		Width:  width,
-	}
-}
-
-// Draw implements the Box interface.
-func (vbox VBox) Draw(page *graphics.Page, xPos, yPos float64) {
-	for i, child := range vbox {
-		ext := child.Extent()
-		if i > 0 {
-			yPos -= ext.Height
-		}
-		if i < len(vbox)-1 {
-			yPos -= ext.Depth
-		}
-	}
-
-	for i, child := range vbox {
-		ext := child.Extent()
-		if i > 0 {
-			yPos -= ext.Height
-		}
-		child.Draw(page, xPos, yPos)
-		yPos -= ext.Depth
-	}
-}
-
 // VTop represents a Box which contains a column of sub-objects.
 // The base point is the base point of the first box.
 type VTop []Box

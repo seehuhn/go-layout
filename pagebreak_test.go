@@ -23,23 +23,23 @@ import (
 
 func TestVBreakCandidates1(t *testing.T) {
 	vList := []Box{
-		&RuleBox{
+		&ruleBox{
 			BoxExtent: BoxExtent{
 				Width:  10,
 				Height: 10,
 				Depth:  0,
 			},
 		},
-		Penalty(123),
-		&RuleBox{
+		penalty(123),
+		&ruleBox{
 			BoxExtent: BoxExtent{
 				Width:  10,
 				Height: 10,
 				Depth:  0,
 			},
 		},
-		Penalty(456),
-		&RuleBox{
+		penalty(456),
+		&ruleBox{
 			BoxExtent: BoxExtent{
 				Width:  10,
 				Height: 10,
@@ -85,23 +85,23 @@ func TestVBreakCandidates1(t *testing.T) {
 
 func TestVBreakCandidates2(t *testing.T) {
 	vList := []Box{
-		&RuleBox{
+		&ruleBox{
 			BoxExtent: BoxExtent{
 				Width:  10,
 				Height: 10,
 				Depth:  5,
 			},
 		},
-		Penalty(1),
-		&RuleBox{
+		penalty(1),
+		&ruleBox{
 			BoxExtent: BoxExtent{
 				Width:  10,
 				Height: 10,
 				Depth:  5,
 			},
 		},
-		Penalty(2),
-		&RuleBox{
+		penalty(2),
+		&ruleBox{
 			BoxExtent: BoxExtent{
 				Width:  10,
 				Height: 10,

@@ -28,7 +28,7 @@ import (
 	"seehuhn.de/go/pdf/pages"
 )
 
-func (e *Engine) VisualisePageBreak(tree *pages.Tree, F font.Embedded, height float64) error {
+func (e *Engine) DebugPageBreak(tree *pages.Tree, F font.Embedded, height float64) error {
 	const (
 		overshot     = 1.4
 		glueHeight   = 12
@@ -123,7 +123,7 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F font.Embedded, height fl
 		}
 		var label string
 		switch obj := box.(type) {
-		case Penalty:
+		case penalty:
 			pVal := float64(obj)
 			if math.IsInf(pVal, +1) {
 				label = "penalty (no break)"
@@ -256,7 +256,7 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F font.Embedded, height fl
 	prevDept := 0.0
 	for i := 0; i < bestPos; i++ {
 		box := e.VList[i]
-		if _, isPenalty := box.(Penalty); isPenalty {
+		if _, isPenalty := box.(penalty); isPenalty {
 			continue
 		}
 
@@ -341,7 +341,7 @@ func (e *Engine) VisualisePageBreak(tree *pages.Tree, F font.Embedded, height fl
 	return nil
 }
 
-func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F font.Embedded) error {
+func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 	// This must match the code in [Engine.EndParagraph]
 
 	const (
@@ -356,7 +356,7 @@ func (e *Engine) VisualiseLineBreaks(tree *pages.Tree, F font.Embedded) error {
 		annotationColor = color.RGB(0, 0.7, 0)
 	)
 
-	hList := e.HList
+	hList := e.hList
 	if e.ParFillSkip != nil {
 		hList = append(hList, &hModePenalty{Penalty: PenaltyPreventBreak})
 		parFillSkip := &hModeGlue{

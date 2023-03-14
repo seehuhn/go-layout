@@ -307,8 +307,3 @@ func abs(x fitnessClass) fitnessClass {
 	}
 	return x
 }
-
-var (
-	PenaltyPreventBreak = math.Inf(+1)
-	PenaltyForceBreak   = math.Inf(-1)
-)

@@ -24,7 +24,7 @@ func (e *Engine) EndParagraph() {
 	// This must match the code in [Engine.VisualiseLineBreaks]
 
 	// Gather the material for the line breaker.
-	hList := e.HList
+	hList := e.hList
 	// Add the final glue ...
 	if e.ParFillSkip != nil {
 		hList = append(hList, &hModePenalty{Penalty: PenaltyPreventBreak})
@@ -37,9 +37,9 @@ func (e *Engine) EndParagraph() {
 	// ... and a forced line break.
 	hList = append(hList, &hModePenalty{Penalty: PenaltyForceBreak})
 
-	e.HList = e.HList[:0]
-	e.AfterPunct = false
-	e.AfterSpace = false
+	e.hList = e.hList[:0]
+	e.afterPunct = false
+	e.afterSpace = false
 
 	lineWidth := &Skip{Length: e.TextWidth}
 	lineWidth = lineWidth.Minus(e.LeftSkip).Minus(e.RightSkip)
@@ -96,14 +96,14 @@ func (e *Engine) EndParagraph() {
 		}
 
 		if i > 0 {
-			penalty := e.InterLinePenalty
+			p := e.InterLinePenalty
 			if i == 1 {
-				penalty += e.ClubPenalty
+				p += e.ClubPenalty
 			}
 			if i == len(breaks)-1 {
-				penalty += e.WidowPenalty
+				p += e.WidowPenalty
 			}
-			e.VList = append(e.VList, Penalty(penalty))
+			e.VAddPenalty(p)
 		}
 
 		lineBox := HBoxTo(e.TextWidth, currentLine...)
