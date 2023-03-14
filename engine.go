@@ -17,8 +17,10 @@
 package layout
 
 import (
+	"math"
 	"unicode"
 
+	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/sfnt/funit"
 )
@@ -35,7 +37,7 @@ type hModeBox struct {
 }
 
 type hModeGlue struct {
-	Skip
+	Glue
 	Text string
 }
 
@@ -47,31 +49,46 @@ type hModePenalty struct {
 
 type Engine struct {
 	TextWidth   float64
-	LeftSkip    *Skip
-	RightSkip   *Skip
-	ParFillSkip *Skip
+	ParIndent   *Glue
+	LeftSkip    *Glue
+	RightSkip   *Glue
+	ParFillSkip *Glue
 
-	TopSkip      float64
-	BottomGlue   *Skip
+	TextHeight   float64
+	TopSkip      float64 // TODO(voss): rename this, because it's not a glue?
+	BottomGlue   *Glue
 	BaseLineSkip float64
-	ParSkip      *Skip
+	ParSkip      *Glue
 
 	InterLinePenalty float64
 	ClubPenalty      float64
 	WidowPenalty     float64
 
-	PageNumber    int
-	AfterPageFunc func(*Engine, *graphics.Page) error
+	PageNumber     int
+	BeforePageFunc func(int, *graphics.Page) error
+	AfterPageFunc  func(int, *graphics.Page) error
+	AfterCloseFunc func(pageDict pdf.Dict) error
 
 	hList      []interface{} // list of hModeBox, hModeGlue, hModePenalty
 	afterPunct bool
 	afterSpace bool
 
-	VList     []Box // TODO(voss): unexport this
+	vList     []Box
 	prevDepth float64
+	vRecordCB []func(*BoxInfo)
+	records   []*boxRecord
+}
+
+type BoxInfo struct {
+	PageRef *pdf.Reference
+	BBox    *pdf.Rectangle
+	PageNo  int
 }
 
 func (e *Engine) HAddText(F *FontInfo, text string) {
+	if len(e.hList) == 0 && e.ParIndent != nil {
+		e.hList = append(e.hList, &hModeGlue{Glue: *e.ParIndent})
+	}
 	geom := F.Font.GetGeometry()
 	space := F.Font.Layout(" ", F.Size)
 	var spaceWidth funit.Int
@@ -84,7 +101,7 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 	pdfSpaceWidth := geom.ToPDF(F.Size, spaceWidth)
 
 	spaceGlue := &hModeGlue{
-		Skip: Skip{
+		Glue: Glue{
 			Length:  pdfSpaceWidth,
 			Stretch: glueAmount{Val: pdfSpaceWidth / 2},
 			Shrink:  glueAmount{Val: pdfSpaceWidth / 3},
@@ -92,7 +109,7 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 		Text: " ",
 	}
 	xSpaceGlue := &hModeGlue{
-		Skip: Skip{
+		Glue: Glue{
 			Length:  1.5 * pdfSpaceWidth,
 			Stretch: glueAmount{Val: pdfSpaceWidth * 1.5},
 			Shrink:  glueAmount{Val: pdfSpaceWidth},
@@ -151,21 +168,44 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 }
 
 // HAddGlue adds a glue item to the horizontal mode list.
-func (e *Engine) HAddGlue(g *Skip) {
-	e.hList = append(e.hList, &hModeGlue{Skip: *g})
+func (e *Engine) HAddGlue(g *Glue) {
+	e.hList = append(e.hList, &hModeGlue{Glue: *g})
+}
+
+func (e *Engine) VAddGlue(g *Glue) {
+	// TODO(voss): check for infinite shrinkability
+	e.vList = append(e.vList, g)
 }
 
 func (e *Engine) VAddBox(b Box) {
 	ext := b.Extent()
-	if len(e.VList) > 0 {
+	if len(e.vList) > 0 {
 		gap := ext.Height + e.prevDepth
-		if gap+0.001 < e.BaseLineSkip {
-			e.VList = append(e.VList, Kern(e.BaseLineSkip-gap))
+		if gap+eps < e.BaseLineSkip {
+			e.vList = append(e.vList, Kern(e.BaseLineSkip-gap))
 		}
 	}
-	e.VList = append(e.VList, b)
+	if len(e.vRecordCB) > 0 {
+		e.vList = append(e.vList, &recordPageLocation{
+			Box: b,
+			e:   e,
+			cb:  e.vRecordCB,
+		})
+		e.vRecordCB = nil
+	} else {
+		e.vList = append(e.vList, b)
+	}
 	e.prevDepth = ext.Depth
 }
+
+func (e *Engine) VAddPenalty(p float64) {
+	e.vList = append(e.vList, penalty(p))
+}
+
+var (
+	PenaltyPreventBreak = math.Inf(+1)
+	PenaltyForceBreak   = math.Inf(-1)
+)
 
 type penalty float64
 
@@ -175,4 +215,8 @@ func (obj penalty) Extent() *BoxExtent {
 
 func (obj penalty) Draw(page *graphics.Page, xPos, yPos float64) {
 	// pass
+}
+
+func (e *Engine) VRecordNextBox(cb func(*BoxInfo)) {
+	e.vRecordCB = append(e.vRecordCB, cb)
 }

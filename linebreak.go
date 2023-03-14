@@ -29,7 +29,7 @@ func (e *Engine) EndParagraph() {
 	if e.ParFillSkip != nil {
 		hList = append(hList, &hModePenalty{Penalty: PenaltyPreventBreak})
 		parFillSkip := &hModeGlue{
-			Skip: *e.ParFillSkip,
+			Glue: *e.ParFillSkip,
 			Text: "\n",
 		}
 		hList = append(hList, parFillSkip)
@@ -41,7 +41,7 @@ func (e *Engine) EndParagraph() {
 	e.afterPunct = false
 	e.afterSpace = false
 
-	lineWidth := &Skip{Length: e.TextWidth}
+	lineWidth := &Glue{Length: e.TextWidth}
 	lineWidth = lineWidth.Minus(e.LeftSkip).Minus(e.RightSkip)
 
 	// Break the paragraph into lines.
@@ -50,7 +50,7 @@ func (e *Engine) EndParagraph() {
 		γ: 100,
 		ρ: 1000,
 		q: 0,
-		lineWidth: func(lineNo int) *Skip {
+		lineWidth: func(lineNo int) *Glue {
 			return lineWidth
 		},
 		hList: hList,
@@ -58,8 +58,8 @@ func (e *Engine) EndParagraph() {
 	breaks := br.Run()
 
 	// Add the lines to the vertical list.
-	if len(e.VList) > 0 && e.ParSkip != nil {
-		e.VList = append(e.VList, e.ParSkip)
+	if len(e.vList) > 0 && e.ParSkip != nil {
+		e.vList = append(e.vList, e.ParSkip)
 	}
 	prevPos := 0
 	for i, pos := range breaks {
@@ -70,7 +70,7 @@ func (e *Engine) EndParagraph() {
 		for _, item := range hList[prevPos:pos] {
 			switch h := item.(type) {
 			case *hModeGlue:
-				currentLine = append(currentLine, &h.Skip)
+				currentLine = append(currentLine, &h.Glue)
 			case *hModeBox:
 				currentLine = append(currentLine, h.Box)
 			case *hModePenalty:

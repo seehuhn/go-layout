@@ -17,46 +17,89 @@
 package layout
 
 import (
-	"fmt"
 	"math"
 
 	"seehuhn.de/go/pdf/pages"
 )
 
-func (e *Engine) AppendPage(tree *pages.Tree, height float64) error {
-	vbox := e.MakePage(height)
-	if vbox == nil {
-		return nil
-	}
+func (e *Engine) MakeVTop() Box {
+	vtop := VTop(e.vList...)
+	e.vList = e.vList[:0]
+	return vtop
+}
 
-	e.PageNumber++
+func (e *Engine) AppendPages(tree *pages.Tree, final bool) error {
+	for len(e.vList) > 0 {
+		if !final && (e.vTotalHeight() < 2*e.TextHeight || len(e.vList) < 2) {
+			break
+		}
 
-	page, err := pages.AppendPage(tree)
-	if err != nil {
-		return nil
-	}
+		e.PageNumber++
 
-	vbox.Draw(page.Page, 72, 72) // TODO(voss): make the margins configurable
+		vbox := e.makePage()
 
-	if e.AfterPageFunc != nil {
-		err = e.AfterPageFunc(e, page.Page)
+		if len(e.records) > 0 {
+			panic("unexpected records")
+		}
+
+		page, err := pages.NewPage(tree.Out)
+		if err != nil {
+			return nil
+		}
+
+		if e.BeforePageFunc != nil {
+			err = e.BeforePageFunc(e.PageNumber, page.Page)
+			if err != nil {
+				return err
+			}
+		}
+
+		vbox.Draw(page.Page, 72, 72) // TODO(voss): make the margins configurable
+
+		if e.AfterPageFunc != nil {
+			err = e.AfterPageFunc(e.PageNumber, page.Page)
+			if err != nil {
+				return err
+			}
+		}
+
+		pageDict, err := page.Close()
+		if err != nil {
+			return err
+		}
+
+		pageRef := tree.Out.Alloc()
+		if len(e.records) > 0 {
+			for i, br := range e.records {
+				bi := br.BoxInfo
+				bi.PageRef = pageRef
+				bi.PageNo = e.PageNumber
+				for _, cb := range br.cb {
+					cb(br.BoxInfo)
+				}
+				e.records[i] = nil
+			}
+			e.records = e.records[:0]
+		}
+
+		if e.AfterCloseFunc != nil {
+			err = e.AfterCloseFunc(pageDict)
+			if err != nil {
+				return err
+			}
+		}
+
+		_, err = tree.AppendPage(pageDict, pageRef)
 		if err != nil {
 			return err
 		}
 	}
 
-	_, err = page.Close()
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
-func (e *Engine) MakePage(height float64) Box {
-	if len(e.VList) == 0 {
-		return nil
-	}
+func (e *Engine) makePage() Box {
+	height := e.TextHeight
 
 	cand := e.vGetCandidates(height)
 	bestPos := -1
@@ -69,13 +112,7 @@ func (e *Engine) MakePage(height float64) Box {
 		}
 	}
 
-	if bestPos < 0 {
-		for _, c := range e.VList {
-			fmt.Printf("%T: %v\n", c, c)
-		}
-	}
-
-	ext0 := e.VList[0].Extent()
+	ext0 := e.vList[0].Extent()
 	topSkip := e.TopSkip - ext0.Height
 	if topSkip < 0 {
 		topSkip = 0
@@ -85,17 +122,17 @@ func (e *Engine) MakePage(height float64) Box {
 	if topSkip > 0 {
 		res = append(res, Kern(topSkip))
 	}
-	res = append(res, e.VList[:bestPos]...)
+	res = append(res, e.vList[:bestPos]...)
 	if e.BottomGlue != nil {
 		res = append(res, e.BottomGlue)
 	}
 
-	e.VList = e.VList[bestPos:]
-	for len(e.VList) > 0 && vDiscardible(e.VList[0]) {
-		e.VList = e.VList[1:]
+	e.vList = e.vList[bestPos:]
+	for len(e.vList) > 0 && vDiscardible(e.vList[0]) {
+		e.vList = e.vList[1:]
 	}
 
-	return VBox2To(height, res...)
+	return VBoxTo(height, res...)
 }
 
 type vCandidate struct {
@@ -105,27 +142,27 @@ type vCandidate struct {
 }
 
 func (e *Engine) vGetCandidates(height float64) []vCandidate {
-	if len(e.VList) == 0 {
+	if len(e.vList) == 0 {
 		return nil
 	}
 
-	ext0 := e.VList[0].Extent()
+	ext0 := e.vList[0].Extent()
 	topSkip := e.TopSkip - ext0.Height
 	if topSkip < 0 {
 		topSkip = 0
 	}
 
-	total := &Skip{
+	total := &Glue{
 		Length: topSkip,
 	}
 	total.Add(e.BottomGlue)
 
 	var res []vCandidate
 	prevDept := 0.0
-	for i := 0; i <= len(e.VList); i++ {
+	for i := 0; i <= len(e.vList); i++ {
 		var box Box
-		if i < len(e.VList) {
-			box = e.VList[i]
+		if i < len(e.vList) {
+			box = e.vList[i]
 		}
 
 		minHeight := total.minLength()
@@ -195,19 +232,18 @@ func (e *Engine) vGetCandidates(height float64) []vCandidate {
 // vCanBreak returns true if the vertical list can be broken before the
 // element at position pos.
 func (e *Engine) vCanBreak(pos int) bool {
-	if pos < 1 || pos > len(e.VList) {
+	if pos == len(e.vList) {
+		return true
+	} else if pos < 1 || pos > len(e.vList) {
 		return false
 	}
-	if pos == len(e.VList) {
-		return true
-	}
 
-	switch obj := e.VList[pos].(type) {
-	case *Skip: // before glue, if following a non-discardible item
-		return !vDiscardible(e.VList[pos-1])
+	switch obj := e.vList[pos].(type) {
+	case *Glue: // before glue, if following a non-discardible item
+		return !vDiscardible(e.vList[pos-1])
 	case Kern: // before kern, if followed by glue
-		if pos < len(e.VList)-1 {
-			_, followedByGlue := e.VList[pos+1].(*Skip)
+		if pos < len(e.vList)-1 {
+			_, followedByGlue := e.vList[pos+1].(*Glue)
 			return followedByGlue
 		}
 		return false
@@ -222,11 +258,12 @@ func vDiscardible(box Box) bool {
 	return box.Extent().WhiteSpaceOnly
 }
 
-func (e *Engine) VAddPenalty(p float64) {
-	e.VList = append(e.VList, penalty(p))
+// vTotalHeight returns the total height plus depth of the vertical list.
+func (e *Engine) vTotalHeight() float64 {
+	var height float64
+	for _, box := range e.vList {
+		ext := box.Extent()
+		height += ext.Height + ext.Depth
+	}
+	return height
 }
-
-var (
-	PenaltyPreventBreak = math.Inf(+1)
-	PenaltyForceBreak   = math.Inf(-1)
-)

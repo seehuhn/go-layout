@@ -48,7 +48,7 @@ func TestVBreakCandidates1(t *testing.T) {
 		},
 	}
 	e := &Engine{
-		VList: vList,
+		vList: vList,
 	}
 
 	cand := e.vGetCandidates(20)
@@ -110,7 +110,7 @@ func TestVBreakCandidates2(t *testing.T) {
 		},
 	}
 	e := &Engine{
-		VList: vList,
+		vList: vList,
 	}
 
 	cand := e.vGetCandidates(10)

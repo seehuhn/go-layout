@@ -27,30 +27,30 @@ type knuthPlassLineBreaker struct {
 	ρ float64 // upper bound on the adjustment ratios
 	q int     // looseness parameter (try to in-/decrease number of lines by q)
 
-	lineWidth func(lineNo int) *Skip
+	lineWidth func(lineNo int) *Glue
 
 	hList []interface{}
 
 	active []*knuthPlassNode
-	total  *Skip
+	total  *Glue
 
-	scratch *Skip
+	scratch *Glue
 }
 
 type knuthPlassNode struct {
 	pos           int
 	line          int
 	fitness       fitnessClass
-	total         *Skip
+	total         *Glue
 	totalDemerits float64
 	previous      *knuthPlassNode
 }
 
 func (br *knuthPlassLineBreaker) Run() []int {
-	start := &knuthPlassNode{total: &Skip{}}
+	start := &knuthPlassNode{total: &Glue{}}
 	br.active = append(br.active[:0], start)
-	br.total = &Skip{}
-	br.scratch = &Skip{}
+	br.total = &Glue{}
+	br.scratch = &Glue{}
 
 	for b := 0; b < len(br.hList); b++ {
 		if isValidBreakpoint(br.hList, b) {
@@ -104,7 +104,7 @@ func (br *knuthPlassLineBreaker) Run() []int {
 						case *hModeBox:
 							break afterBLoop
 						case *hModeGlue:
-							totalAfterB.Add(&h.Skip)
+							totalAfterB.Add(&h.Glue)
 						case *hModePenalty:
 							if i > b && h.Penalty == PenaltyForceBreak {
 								break afterBLoop
@@ -141,7 +141,7 @@ func (br *knuthPlassLineBreaker) Run() []int {
 		case *hModeBox:
 			br.total.Length += h.width
 		case *hModeGlue:
-			br.total.Add(&h.Skip)
+			br.total.Add(&h.Glue)
 		}
 	}
 
@@ -213,6 +213,9 @@ func isValidBreakpoint(hList []interface{}, pos int) bool {
 	case *hModePenalty:
 		return h.Penalty < PenaltyPreventBreak
 	case *hModeGlue:
+		if pos == 0 {
+			return false
+		}
 		_, prevIsBox := hList[pos-1].(*hModeBox)
 		return prevIsBox
 	default:

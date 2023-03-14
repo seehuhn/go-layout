@@ -22,35 +22,27 @@ import (
 	"seehuhn.de/go/pdf/graphics"
 )
 
-type stretcher interface {
-	GetStretch() glueAmount
-}
-
-type shrinker interface {
-	GetShrink() glueAmount
-}
-
-// Glue returns a new "glue" box with the given natural length and
+// Skip returns a new "glue" box with the given natural length and
 // stretchability.
-func Glue(length float64, plus float64, plusLevel int, minus float64, minusLevel int) *Skip {
-	return &Skip{
+func Skip(length float64, plus float64, plusLevel int, minus float64, minusLevel int) *Glue {
+	return &Glue{
 		Length:  length,
 		Stretch: glueAmount{plus, plusLevel},
 		Shrink:  glueAmount{minus, minusLevel},
 	}
 }
 
-type Skip struct {
+type Glue struct {
 	Length  float64
 	Stretch glueAmount
 	Shrink  glueAmount
 }
 
-func (g *Skip) Plus(other *Skip) *Skip {
+func (g *Glue) Plus(other *Glue) *Glue {
 	if other == nil {
 		return g.Clone()
 	}
-	return &Skip{
+	return &Glue{
 		Length:  g.Length + other.Length,
 		Stretch: g.Stretch.Plus(other.Stretch),
 		Shrink:  g.Shrink.Plus(other.Shrink),
@@ -58,7 +50,7 @@ func (g *Skip) Plus(other *Skip) *Skip {
 }
 
 // SetMinus sets g to a-b.
-func (g *Skip) SetMinus(a, b *Skip) {
+func (g *Glue) SetMinus(a, b *Glue) {
 	g.Length = a.Length - b.Length
 	if a.Stretch.Order > b.Stretch.Order {
 		g.Stretch = a.Stretch
@@ -76,26 +68,26 @@ func (g *Skip) SetMinus(a, b *Skip) {
 	}
 }
 
-func (g *Skip) Minus(other *Skip) *Skip {
+func (g *Glue) Minus(other *Glue) *Glue {
 	if other == nil {
 		return g.Clone()
 	}
-	return &Skip{
+	return &Glue{
 		Length:  g.Length - other.Length,
 		Stretch: g.Stretch.Minus(other.Stretch),
 		Shrink:  g.Shrink.Minus(other.Shrink),
 	}
 }
 
-func (g *Skip) Clone() *Skip {
-	return &Skip{
+func (g *Glue) Clone() *Glue {
+	return &Glue{
 		Length:  g.Length,
 		Stretch: g.Stretch,
 		Shrink:  g.Shrink,
 	}
 }
 
-func (g *Skip) minLength() float64 {
+func (g *Glue) minLength() float64 {
 	if g == nil {
 		return 0
 	}
@@ -105,7 +97,7 @@ func (g *Skip) minLength() float64 {
 	return g.Length - g.Shrink.Val
 }
 
-func (g *Skip) maxLength() float64 {
+func (g *Glue) maxLength() float64 {
 	if g == nil {
 		return 0
 	}
@@ -115,7 +107,7 @@ func (g *Skip) maxLength() float64 {
 	return g.Length + g.Stretch.Val
 }
 
-func (obj *Skip) Extent() *BoxExtent {
+func (obj *Glue) Extent() *BoxExtent {
 	return &BoxExtent{
 		Width:          obj.Length,
 		Height:         obj.Length,
@@ -123,17 +115,17 @@ func (obj *Skip) Extent() *BoxExtent {
 	}
 }
 
-func (obj *Skip) Draw(page *graphics.Page, xPos, yPos float64) {}
+func (obj *Glue) Draw(page *graphics.Page, xPos, yPos float64) {}
 
-func (obj *Skip) GetStretch() glueAmount {
+func (obj *Glue) GetStretch() glueAmount {
 	return obj.Stretch
 }
 
-func (obj *Skip) GetShrink() glueAmount {
+func (obj *Glue) GetShrink() glueAmount {
 	return obj.Shrink
 }
 
-func (obj *Skip) Add(other *Skip) {
+func (obj *Glue) Add(other *Glue) {
 	if other == nil {
 		return
 	}
@@ -142,7 +134,7 @@ func (obj *Skip) Add(other *Skip) {
 	obj.Shrink.IncrementBy(other.Shrink)
 }
 
-func (obj *Skip) addBoxHeightAndDepth(box Box) {
+func (obj *Glue) addBoxHeightAndDepth(box Box) {
 	ext := box.Extent()
 	obj.Length += ext.Height + ext.Depth
 	if stretch, ok := box.(stretcher); ok {
@@ -153,20 +145,17 @@ func (obj *Skip) addBoxHeightAndDepth(box Box) {
 	}
 }
 
-func measureHeight(boxes []Box) *Skip {
-	res := &Skip{}
+// MeasureHeight returns the total height, depth and stretchability of the given boxes.
+func totalHeightAndGlue(boxes []Box) *Glue {
+	res := &Glue{}
 	for _, box := range boxes {
 		res.addBoxHeightAndDepth(box)
-	}
-	if len(boxes) > 0 {
-		ext := boxes[len(boxes)-1].Extent()
-		res.Length -= ext.Depth
 	}
 	return res
 }
 
-func measureWidth(boxes []Box) *Skip {
-	res := &Skip{}
+func totalWidthAndGlue(boxes []Box) *Glue {
+	res := &Glue{}
 	for _, box := range boxes {
 		ext := box.Extent()
 		res.Length += ext.Width
@@ -230,4 +219,36 @@ func (s *glueAmount) Minus(other glueAmount) glueAmount {
 			Order: s.Order,
 		}
 	}
+}
+
+type stretcher interface {
+	GetStretch() glueAmount
+}
+
+type shrinker interface {
+	GetShrink() glueAmount
+}
+
+func getStretch(box Box, order int) float64 {
+	stretch, ok := box.(stretcher)
+	if !ok {
+		return 0
+	}
+	info := stretch.GetStretch()
+	if info.Order != order {
+		return 0
+	}
+	return info.Val
+}
+
+func getShrink(box Box, order int) float64 {
+	shrink, ok := box.(shrinker)
+	if !ok {
+		return 0
+	}
+	info := shrink.GetShrink()
+	if info.Order != order {
+		return 0
+	}
+	return info.Val
 }

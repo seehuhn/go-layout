@@ -48,15 +48,15 @@ func TestLineBreaks(t *testing.T) {
 
 	e := &Engine{
 		TextWidth:    hSize,
-		RightSkip:    &Skip{Stretch: glueAmount{Val: 36, Order: 0}},
-		ParFillSkip:  Glue(0, 1, 1, 0, 0),
+		RightSkip:    &Glue{Stretch: glueAmount{Val: 36, Order: 0}},
+		ParFillSkip:  Skip(0, 1, 1, 0, 0),
 		BaseLineSkip: geom.ToPDF16(fontSize, geom.BaseLineSkip),
 	}
 
 	e.HAddText(&FontInfo{Font: F1, Size: 10}, testText)
 	e.EndParagraph()
 
-	for _, box := range e.VList {
+	for _, box := range e.vList {
 		t.Logf("%T: %v", box, box)
 	}
 
@@ -69,7 +69,7 @@ func TestLineBreaks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	paragraph := VTop(e.VList)
+	paragraph := VTop(e.vList...)
 
 	paragraph.Draw(page.Page, 72, 25/2.54*72)
 

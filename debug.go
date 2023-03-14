@@ -49,18 +49,18 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree, F font.Embedded, height float6
 	}
 
 	numBoxes := cand[len(cand)-1].pos + 3
-	for numBoxes < len(e.VList) && vDiscardible(e.VList[numBoxes]) {
+	for numBoxes < len(e.vList) && vDiscardible(e.vList[numBoxes]) {
 		numBoxes++
 	}
 	numBoxes++ // include one non-discardible box
-	if numBoxes > len(e.VList) {
-		numBoxes = len(e.VList)
+	if numBoxes > len(e.vList) {
+		numBoxes = len(e.vList)
 	}
 
 	vPos := []float64{0}
 	width := 100.0 // start with a minimum width
 	for i := 0; i < numBoxes; i++ {
-		ext := e.VList[i].Extent()
+		ext := e.vList[i].Extent()
 		naturalHeight := ext.Height + ext.Depth
 
 		if ext.Width > width {
@@ -85,7 +85,7 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree, F font.Embedded, height float6
 	for i := 0; i < numBoxes; i++ {
 		yMid := yTop - (vPos[i+1]+vPos[i])/2
 
-		box := e.VList[i]
+		box := e.vList[i]
 		ext := box.Extent()
 		var yBase, yAscent, yDescent float64
 		if ext.WhiteSpaceOnly {
@@ -134,7 +134,7 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree, F font.Embedded, height float6
 			}
 		case *hBox:
 			label = "hbox"
-		case *Skip:
+		case *Glue:
 			if obj == e.ParSkip {
 				label = "glue (parskip)"
 			} else {
@@ -234,11 +234,11 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree, F font.Embedded, height float6
 	page.PopGraphicsState()
 
 	// mark the accumulated page height, minus the required total
-	total := &Skip{
+	total := &Glue{
 		Length: -height,
 	}
 
-	ext0 := e.VList[0].Extent()
+	ext0 := e.vList[0].Extent()
 	topSkip := e.TopSkip - ext0.Height
 	if topSkip < 0 {
 		topSkip = 0
@@ -255,7 +255,7 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree, F font.Embedded, height float6
 	}
 	prevDept := 0.0
 	for i := 0; i < bestPos; i++ {
-		box := e.VList[i]
+		box := e.vList[i]
 		if _, isPenalty := box.(penalty); isPenalty {
 			continue
 		}
@@ -302,7 +302,7 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree, F font.Embedded, height float6
 	}
 
 	next := bestPos + 1
-	if next < len(e.VList) && vDiscardible(e.VList[next]) {
+	if next < len(e.vList) && vDiscardible(e.vList[next]) {
 		next++
 	}
 
@@ -314,7 +314,7 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree, F font.Embedded, height float6
 	page.LineTo(leftMargin-5, yTop-vPos[bestPos]-2)
 	page.LineTo(leftMargin-5, yTop+2)
 	page.LineTo(leftMargin+30, yTop+2)
-	if next < len(e.VList) {
+	if next < len(e.vList) {
 		page.MoveTo(leftMargin-5, bottomMargin)
 		page.LineTo(leftMargin-5, yTop-vPos[next]+2)
 		page.LineTo(leftMargin+30, yTop-vPos[next]+2)
@@ -333,7 +333,7 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree, F font.Embedded, height float6
 		URx: leftMargin + width + rigthMargin,
 		URy: topMargin + visualHeight + bottomMargin,
 	}
-	_, err = tree.AppendPage(dict)
+	_, err = tree.AppendPage(dict, nil)
 	if err != nil {
 		return err
 	}
@@ -360,14 +360,14 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 	if e.ParFillSkip != nil {
 		hList = append(hList, &hModePenalty{Penalty: PenaltyPreventBreak})
 		parFillSkip := &hModeGlue{
-			Skip: *e.ParFillSkip,
+			Glue: *e.ParFillSkip,
 			Text: "\n",
 		}
 		hList = append(hList, parFillSkip)
 	}
 	hList = append(hList, &hModePenalty{Penalty: PenaltyForceBreak})
 
-	lineWidth := &Skip{Length: e.TextWidth}
+	lineWidth := &Glue{Length: e.TextWidth}
 	lineWidth = lineWidth.Minus(e.LeftSkip).Minus(e.RightSkip)
 
 	br := &knuthPlassLineBreaker{
@@ -375,7 +375,7 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 		γ: 100,
 		ρ: 1000,
 		q: 0,
-		lineWidth: func(lineNo int) *Skip {
+		lineWidth: func(lineNo int) *Glue {
 			return lineWidth
 		},
 		hList: hList,
@@ -398,7 +398,7 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 		for _, item := range hList[prevPos:pos] {
 			switch h := item.(type) {
 			case *hModeGlue:
-				currentLine = append(currentLine, &h.Skip)
+				currentLine = append(currentLine, &h.Glue)
 			case *hModeBox:
 				currentLine = append(currentLine, h.Box)
 			}
@@ -483,7 +483,7 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 			xx = append(xx, x)
 			switch h := hList[pos].(type) {
 			case *hModeGlue:
-				extra = append(extra, &h.Skip)
+				extra = append(extra, &h.Glue)
 				x += h.Length
 			case *hModeBox:
 				extra = append(extra, h.Box)
@@ -544,7 +544,7 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 		page.SetFont(F, 6)
 		page.SetFillColor(annotationColor)
 		page.StartLine(leftMargin+e.TextWidth+72+10, y+4)
-		total := measureWidth(lineContents[i])
+		total := totalWidthAndGlue(lineContents[i])
 		page.ShowText(fmt.Sprintf("%+.1f", e.TextWidth-total.Length))
 		var r float64
 		if total.Length > e.TextWidth+0.05 {
@@ -586,7 +586,7 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 		URx: leftMargin + e.TextWidth + rigthMargin,
 		URy: topMargin + visualHeight + bottomMargin,
 	}
-	_, err = tree.AppendPage(dict)
+	_, err = tree.AppendPage(dict, nil)
 	if err != nil {
 		return err
 	}
