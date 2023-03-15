@@ -35,6 +35,12 @@ func (e *Engine) AppendPages(tree *pages.Tree, final bool) error {
 		}
 
 		e.PageNumber++
+		if e.PageNumber == e.DebugPageNumber {
+			err := e.DebugPageBreak(tree)
+			if err != nil {
+				return err
+			}
+		}
 
 		vbox := e.makePage()
 

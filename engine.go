@@ -69,6 +69,8 @@ type Engine struct {
 	AfterPageFunc  func(int, *graphics.Page) error
 	AfterCloseFunc func(pageDict pdf.Dict) error
 
+	DebugPageNumber int
+
 	hList      []interface{} // list of hModeBox, hModeGlue, hModePenalty
 	afterPunct bool
 	afterSpace bool
