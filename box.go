@@ -37,9 +37,9 @@ type BoxExtent struct {
 func (ext BoxExtent) String() string {
 	extra := ""
 	if ext.WhiteSpaceOnly {
-		extra = "*"
+		extra = "W"
 	}
-	return fmt.Sprintf("%gx%g%+g%s", ext.Width, ext.Height, ext.Depth, extra)
+	return fmt.Sprintf("%gx(%g%+g)%s", ext.Width, ext.Height, ext.Depth, extra)
 }
 
 // Extent allows for objects to embed a BoxExtent in order to implement part of

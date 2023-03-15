@@ -24,11 +24,12 @@ import (
 	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/color"
 	"seehuhn.de/go/pdf/font"
+	"seehuhn.de/go/pdf/font/builtin"
 	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/pdf/pages"
 )
 
-func (e *Engine) DebugPageBreak(tree *pages.Tree, F font.Embedded, height float64) error {
+func (e *Engine) DebugPageBreak(tree *pages.Tree) error {
 	const (
 		overshot     = 1.4
 		glueHeight   = 12
@@ -43,12 +44,18 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree, F font.Embedded, height float6
 		breakColor = color.RGB(0.9, 0, 0)
 	)
 
+	F, err := builtin.Embed(tree.Out, builtin.TimesRoman, "Q")
+	if err != nil {
+		return err
+	}
+
+	height := e.TextHeight
 	cand := e.vGetCandidates(height)
 	if len(cand) == 0 {
 		return nil
 	}
 
-	numBoxes := cand[len(cand)-1].pos + 3
+	numBoxes := cand[len(cand)-1].pos + 6
 	for numBoxes < len(e.vList) && vDiscardible(e.vList[numBoxes]) {
 		numBoxes++
 	}
