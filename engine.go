@@ -21,24 +21,21 @@ import (
 	"unicode"
 
 	"seehuhn.de/go/pdf"
+	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/sfnt/funit"
+	"seehuhn.de/go/sfnt/glyph"
 )
 
 // A list of horizontal mode items can contain the following types:
 //  - *hModeBox: a box which is not affected by line breaking.
 //        The only property relevant for line breaking is the width.
-//  - *hModeGlue:
+//  - *Glue:
 //  - *hModePenalty: an optional breakpoint
 
 type hModeBox struct {
 	Box
 	width float64
-}
-
-type hModeGlue struct {
-	Glue
-	Text string
 }
 
 type hModePenalty struct {
@@ -57,7 +54,7 @@ type Engine struct {
 	TextHeight   float64
 	TopSkip      float64 // TODO(voss): rename this, because it's not a glue?
 	BottomGlue   *Glue
-	BaseLineSkip float64
+	BaseLineSkip float64 // TODO(voss): rename this, because it's not a glue?
 	ParSkip      *Glue
 
 	InterLinePenalty float64
@@ -71,7 +68,7 @@ type Engine struct {
 
 	DebugPageNumber int
 
-	hList      []interface{} // list of hModeBox, hModeGlue, hModePenalty
+	hList      []interface{} // list of *hModeBox, *Glue, *hModePenalty
 	afterPunct bool
 	afterSpace bool
 
@@ -89,89 +86,127 @@ type BoxInfo struct {
 
 func (e *Engine) HAddText(F *FontInfo, text string) {
 	if len(e.hList) == 0 && e.ParIndent != nil {
-		e.hList = append(e.hList, &hModeGlue{Glue: *e.ParIndent})
+		e.hList = append(e.hList, e.ParIndent)
 	}
-	geom := F.Font.GetGeometry()
-	space := F.Font.Layout(" ", F.Size)
-	var spaceWidth funit.Int
-	if len(space) == 1 && space[0].Gid != 0 {
-		spaceWidth = funit.Int(space[0].Advance)
-	} else {
-		space = nil
-		spaceWidth = funit.Int(geom.UnitsPerEm / 4)
-	}
-	pdfSpaceWidth := geom.ToPDF(F.Size, spaceWidth)
 
-	spaceGlue := &hModeGlue{
-		Glue: Glue{
-			Length:  pdfSpaceWidth,
-			Stretch: glueAmount{Val: pdfSpaceWidth / 2},
-			Shrink:  glueAmount{Val: pdfSpaceWidth / 3},
-		},
-		Text: " ",
+	geom := F.Font.GetGeometry()
+	spaceGID, spaceWidth := font.GetGID(F.Font, ' ')
+	if spaceGID == 0 {
+		spaceWidth = funit.Int16(geom.UnitsPerEm / 4)
 	}
-	xSpaceGlue := &hModeGlue{
-		Glue: Glue{
-			Length:  1.5 * pdfSpaceWidth,
-			Stretch: glueAmount{Val: pdfSpaceWidth * 1.5},
-			Shrink:  glueAmount{Val: pdfSpaceWidth},
-		},
-		Text: " ",
+	pdfSpaceWidth := geom.ToPDF16(F.Size, spaceWidth)
+
+	spaceGlue := &Glue{
+		Length:  pdfSpaceWidth,
+		Stretch: glueAmount{Val: pdfSpaceWidth / 2},
+		Shrink:  glueAmount{Val: pdfSpaceWidth / 3},
 	}
+	xSpaceGlue := &Glue{
+		Length:  1.5 * pdfSpaceWidth,
+		Stretch: glueAmount{Val: pdfSpaceWidth * 1.5},
+		Shrink:  glueAmount{Val: pdfSpaceWidth},
+	}
+
+	var run []rune
 	addSpace := func() {
-		if e.afterPunct {
+		if spaceGID != 0 {
+			var gg []glyph.Info
+			var rr []rune
+			var width funit.Int16
+			for _, r := range run {
+				gid, _ := font.GetGID(F.Font, r)
+				if gid != 0 {
+					w := geom.Widths[gid]
+					gg = append(gg, glyph.Info{
+						Gid:     gid,
+						Text:    append(rr, r),
+						Advance: w,
+					})
+					width += w
+					rr = nil
+				} else {
+					rr = append(rr, r)
+				}
+			}
+			gg[len(gg)-1].Advance -= width // no width for space glyphs, since we add glue below
+			if len(rr) > 0 {
+				gg = append(gg, glyph.Info{
+					Gid:  spaceGID,
+					Text: rr,
+				})
+			}
+
+			var prevText *TextBox
+			if k := len(e.hList); k > 0 {
+				if box, ok := e.hList[k-1].(*hModeBox); ok {
+					prevText, _ = box.Box.(*TextBox)
+				}
+			}
+			if prevText != nil {
+				prevText.Glyphs = append(prevText.Glyphs, gg...)
+			} else {
+				box := &TextBox{F: F, Glyphs: gg}
+				e.hList = append(e.hList, &hModeBox{Box: box})
+			}
+		}
+		run = run[:0]
+
+		if len(run) == 1 && run[0] == 0x200B { // ZERO WIDTH SPACE
+			e.hList = append(e.hList, &hModePenalty{})
+		} else if e.afterPunct {
 			e.hList = append(e.hList, xSpaceGlue)
 		} else {
 			e.hList = append(e.hList, spaceGlue)
 		}
 	}
-	addRunes := func(rr []rune) {
-		gg := F.Font.Layout(string(rr), F.Size)
-		box := &TextBox{
-			F:      F,
-			Glyphs: gg,
-		}
+	addRunes := func() {
+		gg := F.Font.Layout(string(run), F.Size)
+		box := &TextBox{F: F, Glyphs: gg}
 		e.hList = append(e.hList, &hModeBox{
 			Box:   box,
 			width: geom.ToPDF(F.Size, gg.AdvanceWidth()),
 		})
+		run = run[:0]
 	}
 
-	var run []rune
 	for _, r := range text {
-		if r == 0x200B { // ZERO WIDTH SPACE
-			if len(run) > 0 {
-				addRunes(run)
-				run = run[:0]
-			}
-			e.hList = append(e.hList, &hModePenalty{})
-		} else if unicode.IsSpace(r) &&
+		if unicode.IsSpace(r) &&
 			r != 0x00A0 && // NO-BREAK SPACE
 			r != 0x2007 && // FIGURE SPACE
 			r != 0x202F { // NARROW NO-BREAK SPACE
-			if len(run) > 0 {
-				addRunes(run)
-				run = run[:0]
+
+			if !e.afterSpace && len(run) > 0 {
+				addRunes()
 			}
+
+			run = append(run, r)
+			e.afterSpace = true
+
 			if !e.afterSpace {
 				addSpace()
 			}
-			e.afterSpace = true
-			e.afterPunct = false
 		} else {
+			if e.afterSpace && len(run) > 0 {
+				addSpace()
+			}
+
 			run = append(run, r)
 			e.afterSpace = false
-			e.afterPunct = r == '.' || r == '!' || r == '?'
 		}
+		e.afterPunct = r == '.' || r == '!' || r == '?'
 	}
 	if len(run) > 0 {
-		addRunes(run)
+		if e.afterSpace {
+			addSpace()
+		} else {
+			addRunes()
+		}
 	}
 }
 
 // HAddGlue adds a glue item to the horizontal mode list.
 func (e *Engine) HAddGlue(g *Glue) {
-	e.hList = append(e.hList, &hModeGlue{Glue: *g})
+	e.hList = append(e.hList, g)
 }
 
 func (e *Engine) VAddGlue(g *Glue) {

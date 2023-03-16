@@ -103,8 +103,8 @@ func (br *knuthPlassLineBreaker) Run() []int {
 						switch h := br.hList[i].(type) {
 						case *hModeBox:
 							break afterBLoop
-						case *hModeGlue:
-							totalAfterB.Add(&h.Glue)
+						case *Glue:
+							totalAfterB.Add(h)
 						case *hModePenalty:
 							if i > b && h.Penalty == PenaltyForceBreak {
 								break afterBLoop
@@ -140,8 +140,8 @@ func (br *knuthPlassLineBreaker) Run() []int {
 		switch h := br.hList[b].(type) {
 		case *hModeBox:
 			br.total.Length += h.width
-		case *hModeGlue:
-			br.total.Add(&h.Glue)
+		case *Glue:
+			br.total.Add(h)
 		}
 	}
 
@@ -212,7 +212,7 @@ func isValidBreakpoint(hList []interface{}, pos int) bool {
 	switch h := hList[pos].(type) {
 	case *hModePenalty:
 		return h.Penalty < PenaltyPreventBreak
-	case *hModeGlue:
+	case *Glue:
 		if pos == 0 {
 			return false
 		}

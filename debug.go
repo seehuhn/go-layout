@@ -366,11 +366,7 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 	hList := e.hList
 	if e.ParFillSkip != nil {
 		hList = append(hList, &hModePenalty{Penalty: PenaltyPreventBreak})
-		parFillSkip := &hModeGlue{
-			Glue: *e.ParFillSkip,
-			Text: "\n",
-		}
-		hList = append(hList, parFillSkip)
+		hList = append(hList, e.ParFillSkip)
 	}
 	hList = append(hList, &hModePenalty{Penalty: PenaltyForceBreak})
 
@@ -404,8 +400,8 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 		}
 		for _, item := range hList[prevPos:pos] {
 			switch h := item.(type) {
-			case *hModeGlue:
-				currentLine = append(currentLine, &h.Glue)
+			case *Glue:
+				currentLine = append(currentLine, h)
 			case *hModeBox:
 				currentLine = append(currentLine, h.Box)
 			}
@@ -489,8 +485,8 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 		for pos < len(hList) {
 			xx = append(xx, x)
 			switch h := hList[pos].(type) {
-			case *hModeGlue:
-				extra = append(extra, &h.Glue)
+			case *Glue:
+				extra = append(extra, h)
 				x += h.Length
 			case *hModeBox:
 				extra = append(extra, h.Box)
