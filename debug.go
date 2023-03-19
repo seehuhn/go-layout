@@ -26,10 +26,10 @@ import (
 	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/font/builtin"
 	"seehuhn.de/go/pdf/graphics"
-	"seehuhn.de/go/pdf/pages"
+	"seehuhn.de/go/pdf/pagetree"
 )
 
-func (e *Engine) DebugPageBreak(tree *pages.Tree) error {
+func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	const (
 		overshot     = 1.4
 		glueHeight   = 12
@@ -360,7 +360,7 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree) error {
 	return nil
 }
 
-func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
+func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 	// This must match the code in [Engine.EndParagraph]
 
 	const (

@@ -26,6 +26,8 @@ seehuhn.de/go/pdf v0.1.1-0.20230316145842-1f2f1c8b1aa1 h1:vES8OyFUnhac9eLq5w/RHx
 seehuhn.de/go/pdf v0.1.1-0.20230316145842-1f2f1c8b1aa1/go.mod h1:YWmh6HbDqpoS/OgnpoAIMsCt5DbkmJWFVE4xstJu9OM=
 seehuhn.de/go/pdf v0.1.1-0.20230319134708-138f8bc4433b h1:4BDepe7IQNh7qd2Sd79hkgLpaT4Yzx+2WJnaajnxkTA=
 seehuhn.de/go/pdf v0.1.1-0.20230319134708-138f8bc4433b/go.mod h1:YWmh6HbDqpoS/OgnpoAIMsCt5DbkmJWFVE4xstJu9OM=
+seehuhn.de/go/pdf v0.1.1-0.20230319231010-e118a093c472 h1:z54lon9M6TAKU1CzOAYbNSZeXr94tD3lQk+J5Q83gSc=
+seehuhn.de/go/pdf v0.1.1-0.20230319231010-e118a093c472/go.mod h1:YWmh6HbDqpoS/OgnpoAIMsCt5DbkmJWFVE4xstJu9OM=
 seehuhn.de/go/sfnt v0.0.0-20230221152810-19ee833c296e h1:shpzvLLfxUTct8L/ouPGSC0GhyeUX/Cie0S0Ut4Kzak=
 seehuhn.de/go/sfnt v0.0.0-20230221152810-19ee833c296e/go.mod h1:RKgZDBBqBN+2fWeDy9XCo7h43c/oKLcoNORfiGDVek4=
 seehuhn.de/go/sfnt v0.0.0-20230303175840-8ba52fbc4bee h1:5A2581L3K4EjLdrA6GLWwv3sIwgIl5SPs5Belvnvf10=

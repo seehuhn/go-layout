@@ -21,7 +21,7 @@ import (
 
 	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/graphics"
-	"seehuhn.de/go/pdf/pages"
+	"seehuhn.de/go/pdf/pagetree"
 )
 
 func (e *Engine) MakeVTop() Box {
@@ -30,7 +30,7 @@ func (e *Engine) MakeVTop() Box {
 	return vtop
 }
 
-func (e *Engine) AppendPages(tree *pages.Tree, final bool) error {
+func (e *Engine) AppendPages(tree *pagetree.Writer, final bool) error {
 	for len(e.vList) > 0 {
 		if !final && (e.vTotalHeight() < 2*e.TextHeight || len(e.vList) < 2) {
 			break

@@ -23,11 +23,11 @@ import (
 	"golang.org/x/text/language"
 	"seehuhn.de/go/pdf/document"
 	"seehuhn.de/go/pdf/font/simple"
-	"seehuhn.de/go/pdf/pages"
+	"seehuhn.de/go/pdf/pagetree"
 )
 
 func TestLineBreaks(t *testing.T) {
-	paper := pages.A4
+	paper := pagetree.A4
 	hSize := math.Round(15 / 2.54 * 72)
 	const fontSize = 10
 
