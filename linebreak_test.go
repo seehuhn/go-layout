@@ -21,26 +21,22 @@ import (
 	"testing"
 
 	"golang.org/x/text/language"
-	"seehuhn.de/go/pdf"
+	"seehuhn.de/go/pdf/document"
 	"seehuhn.de/go/pdf/font/simple"
 	"seehuhn.de/go/pdf/pages"
 )
 
 func TestLineBreaks(t *testing.T) {
-	const fontSize = 10
+	paper := pages.A4
 	hSize := math.Round(15 / 2.54 * 72)
+	const fontSize = 10
 
-	out, err := pdf.Create("test_LineBreaks.pdf")
+	doc, err := document.CreateSinglePage("test_LineBreaks.pdf", paper.URx, paper.URy)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	FF1, err := simple.LoadFont("../otf/SourceSerif4-Regular.otf",
-		language.BritishEnglish)
-	if err != nil {
-		t.Fatal(err)
-	}
-	F1, err := FF1.Embed(out, "F1")
+	F1, err := simple.EmbedFile(doc.Out, "../otf/SourceSerif4-Regular.otf", "F1", language.BritishEnglish)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,31 +52,13 @@ func TestLineBreaks(t *testing.T) {
 	e.HAddText(&FontInfo{Font: F1, Size: 10}, testText)
 	e.EndParagraph()
 
-	for _, box := range e.vList {
-		t.Logf("%T: %v", box, box)
-	}
-
-	pageTree := pages.InstallTree(out, &pages.InheritableAttributes{
-		MediaBox: pages.A4,
-	})
-
-	page, err := pages.AppendPage(pageTree)
-	if err != nil {
-		t.Fatal(err)
-	}
-
 	paragraph := VTop(e.vList...)
 
-	paragraph.Draw(page.Page, 72, 25/2.54*72)
+	paragraph.Draw(doc.Page, 72, 25/2.54*72)
 
-	_, err = page.Close()
+	err = doc.Close()
 	if err != nil {
 		t.Fatal(err)
-	}
-
-	err = out.Close()
-	if err != nil {
-		t.Error(err)
 	}
 }
 
