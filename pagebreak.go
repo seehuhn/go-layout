@@ -19,6 +19,8 @@ package layout
 import (
 	"math"
 
+	"seehuhn.de/go/pdf"
+	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/pdf/pages"
 )
 
@@ -48,30 +50,42 @@ func (e *Engine) AppendPages(tree *pages.Tree, final bool) error {
 			panic("unexpected records")
 		}
 
-		page, err := pages.NewPage(tree.Out)
-		if err != nil {
-			return nil
+		compress := &pdf.FilterInfo{Name: pdf.Name("LZWDecode")}
+		if tree.Out.Version >= pdf.V1_2 {
+			compress = &pdf.FilterInfo{Name: pdf.Name("FlateDecode")}
 		}
-
-		if e.BeforePageFunc != nil {
-			err = e.BeforePageFunc(e.PageNumber, page.Page)
-			if err != nil {
-				return err
-			}
-		}
-
-		vbox.Draw(page.Page, 72, 72) // TODO(voss): make the margins configurable
-
-		if e.AfterPageFunc != nil {
-			err = e.AfterPageFunc(e.PageNumber, page.Page)
-			if err != nil {
-				return err
-			}
-		}
-
-		pageDict, err := page.Close()
+		stream, contentRef, err := tree.Out.OpenStream(nil, nil, compress)
 		if err != nil {
 			return err
+		}
+		page := graphics.NewPage(stream)
+
+		if e.BeforePageFunc != nil {
+			err = e.BeforePageFunc(e.PageNumber, page)
+			if err != nil {
+				return err
+			}
+		}
+
+		vbox.Draw(page, 72, 72) // TODO(voss): make the margins configurable
+
+		if e.AfterPageFunc != nil {
+			err = e.AfterPageFunc(e.PageNumber, page)
+			if err != nil {
+				return err
+			}
+		}
+
+		err = stream.Close()
+		if err != nil {
+			return err
+		}
+		pageDict := pdf.Dict{
+			"Type":     pdf.Name("Page"),
+			"Contents": contentRef,
+		}
+		if page.Resources != nil {
+			pageDict["Resources"] = pdf.AsDict(page.Resources)
 		}
 
 		pageRef := tree.Out.Alloc()

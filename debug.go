@@ -82,10 +82,15 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree) error {
 	}
 	visualHeight := vPos[len(vPos)-1]
 
-	page, err := pages.NewPage(tree.Out)
+	compress := &pdf.FilterInfo{Name: pdf.Name("LZWDecode")}
+	if tree.Out.Version >= pdf.V1_2 {
+		compress = &pdf.FilterInfo{Name: pdf.Name("FlateDecode")}
+	}
+	stream, contentRef, err := tree.Out.OpenStream(nil, nil, compress)
 	if err != nil {
 		return err
 	}
+	page := graphics.NewPage(stream)
 
 	yTop := bottomMargin + visualHeight
 	target := height
@@ -117,7 +122,7 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree) error {
 			page.Fill()
 			page.PopGraphicsState()
 
-			box.Draw(page.Page, leftMargin, yBase)
+			box.Draw(page, leftMargin, yBase)
 		}
 
 		// show the box types
@@ -330,15 +335,22 @@ func (e *Engine) DebugPageBreak(tree *pages.Tree) error {
 	page.PopGraphicsState()
 
 	// add the page to the page tree
-	dict, err := page.Close()
+	err = stream.Close()
 	if err != nil {
 		return err
 	}
-	dict["MediaBox"] = &pdf.Rectangle{
-		LLx: 0,
-		LLy: 0,
-		URx: leftMargin + width + rigthMargin,
-		URy: topMargin + visualHeight + bottomMargin,
+	dict := pdf.Dict{
+		"Type":     pdf.Name("Page"),
+		"Contents": contentRef,
+		"MediaBox": &pdf.Rectangle{
+			LLx: 0,
+			LLy: 0,
+			URx: leftMargin + width + rigthMargin,
+			URy: topMargin + visualHeight + bottomMargin,
+		},
+	}
+	if page.Resources != nil {
+		dict["Resources"] = pdf.AsDict(page.Resources)
 	}
 	_, err = tree.AppendPage(dict, nil)
 	if err != nil {
@@ -439,10 +451,15 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 	// Now we have gathered all the lines.
 	// Create a page which shows the line breaks.
 
-	page, err := pages.NewPage(tree.Out)
+	compress := &pdf.FilterInfo{Name: pdf.Name("LZWDecode")}
+	if tree.Out.Version >= pdf.V1_2 {
+		compress = &pdf.FilterInfo{Name: pdf.Name("FlateDecode")}
+	}
+	stream, contentRef, err := tree.Out.OpenStream(nil, nil, compress)
 	if err != nil {
 		return err
 	}
+	page := graphics.NewPage(stream)
 	page.AddExtGState("gs:t", pdf.Dict{
 		"ca": pdf.Real(0.75), // fill alpha
 	})
@@ -472,7 +489,7 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 		y -= ext.Height
 
 		// draw the line
-		box.Draw(page.Page, x, y)
+		box.Draw(page, x, y)
 
 		// draw the first few tokens after the linebreak, to illustrate
 		// the linebreak decision
@@ -503,7 +520,7 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 		page.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
 		page.ClipNonZero()
 		page.EndPath()
-		overflow.Draw(page.Page, xEnd, y)
+		overflow.Draw(page, xEnd, y)
 		page.SetExtGState("gs:t")
 		page.SetFillColor(color.RGB(1, 1, 1))
 		page.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
@@ -579,15 +596,22 @@ func (e *Engine) DebugLineBreaks(tree *pages.Tree, F font.Embedded) error {
 		y -= 10
 	}
 
-	dict, err := page.Close()
+	err = stream.Close()
 	if err != nil {
 		return err
 	}
-	dict["MediaBox"] = &pdf.Rectangle{
-		LLx: 0,
-		LLy: 0,
-		URx: leftMargin + e.TextWidth + rigthMargin,
-		URy: topMargin + visualHeight + bottomMargin,
+	dict := pdf.Dict{
+		"Type":     pdf.Name("Page"),
+		"Contents": contentRef,
+		"MediaBox": &pdf.Rectangle{
+			LLx: 0,
+			LLy: 0,
+			URx: leftMargin + e.TextWidth + rigthMargin,
+			URy: topMargin + visualHeight + bottomMargin,
+		},
+	}
+	if page.Resources != nil {
+		dict["Resources"] = pdf.AsDict(page.Resources)
 	}
 	_, err = tree.AppendPage(dict, nil)
 	if err != nil {
