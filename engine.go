@@ -79,7 +79,7 @@ type Engine struct {
 }
 
 type BoxInfo struct {
-	PageRef *pdf.Reference
+	PageRef pdf.Reference
 	BBox    *pdf.Rectangle
 	PageNo  int
 }

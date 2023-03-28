@@ -54,7 +54,7 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, final bool) error {
 		if tree.Out.Version >= pdf.V1_2 {
 			compress = &pdf.FilterInfo{Name: pdf.Name("FlateDecode")}
 		}
-		stream, contentRef, err := tree.Out.OpenStream(nil, nil, compress)
+		stream, contentRef, err := tree.Out.OpenStream(nil, 0, compress)
 		if err != nil {
 			return err
 		}
