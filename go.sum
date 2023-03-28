@@ -1,6 +1,8 @@
 github.com/google/go-cmp v0.5.9 h1:O2Tfq5qg4qc4AmwVlvv0oLiVAGB7enBSJ2x2DqQFi38=
 golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2 h1:Jvc7gsqn21cJHCmAWx0LiimpP18LZmUxkT5Mp7EZ1mI=
 golang.org/x/exp v0.0.0-20230224173230-c95f2b4c22f2/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
+golang.org/x/exp v0.0.0-20230321023759-10a507213a29 h1:ooxPy7fPvB4kwsA2h+iBNHkAbp/4JxTSwCmvdjEYmug=
+golang.org/x/exp v0.0.0-20230321023759-10a507213a29/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
 golang.org/x/image v0.3.0 h1:HTDXbdK9bjfSWkPzDJIw89W8CAtfFGduujWs33NLLsg=
 golang.org/x/text v0.7.0 h1:4BRB4x83lYWy72KwLD/qYDuTu7q9PjSagHvijDw7cLo=
 golang.org/x/text v0.7.0/go.mod h1:mrYo+phRRbMaCq/xk9113O4dZlRixOauAjOtrjsXDZ8=
@@ -36,3 +38,5 @@ seehuhn.de/go/sfnt v0.0.0-20230221152810-19ee833c296e h1:shpzvLLfxUTct8L/ouPGSC0
 seehuhn.de/go/sfnt v0.0.0-20230221152810-19ee833c296e/go.mod h1:RKgZDBBqBN+2fWeDy9XCo7h43c/oKLcoNORfiGDVek4=
 seehuhn.de/go/sfnt v0.0.0-20230303175840-8ba52fbc4bee h1:5A2581L3K4EjLdrA6GLWwv3sIwgIl5SPs5Belvnvf10=
 seehuhn.de/go/sfnt v0.0.0-20230303175840-8ba52fbc4bee/go.mod h1:5c8lCHyX7n5Wy0G2xsz3sitI4WbqEYhV5hq5hrvBfSE=
+seehuhn.de/go/sfnt v0.0.0-20230316145804-ab7e8aec73c2 h1:lcHEd5VpUP8Fw5p0T483c8Q61DikE1EZNED1xAi5vck=
+seehuhn.de/go/sfnt v0.0.0-20230316145804-ab7e8aec73c2/go.mod h1:5c8lCHyX7n5Wy0G2xsz3sitI4WbqEYhV5hq5hrvBfSE=

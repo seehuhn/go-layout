@@ -52,9 +52,9 @@ type Engine struct {
 	ParFillSkip *Glue
 
 	TextHeight   float64
-	TopSkip      float64 // TODO(voss): rename this, because it's not a glue?
+	TopSkip      float64 // TODO(voss): rename this, because it's not a "skip"?
 	BottomGlue   *Glue
-	BaseLineSkip float64 // TODO(voss): rename this, because it's not a glue?
+	BaseLineSkip float64 // TODO(voss): rename this, because it's not a "skip"?
 	ParSkip      *Glue
 
 	InterLinePenalty float64
