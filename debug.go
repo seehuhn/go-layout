@@ -86,7 +86,8 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	if tree.Out.Version >= pdf.V1_2 {
 		compress = &pdf.FilterInfo{Name: pdf.Name("FlateDecode")}
 	}
-	stream, contentRef, err := tree.Out.OpenStream(nil, 0, compress)
+	contentRef := tree.Out.Alloc()
+	stream, err := tree.Out.OpenStream(contentRef, nil, compress)
 	if err != nil {
 		return err
 	}
@@ -352,7 +353,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	if page.Resources != nil {
 		dict["Resources"] = pdf.AsDict(page.Resources)
 	}
-	_, err = tree.AppendPage(dict, 0)
+	err = tree.AppendPage(dict)
 	if err != nil {
 		return err
 	}
@@ -455,7 +456,8 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 	if tree.Out.Version >= pdf.V1_2 {
 		compress = &pdf.FilterInfo{Name: pdf.Name("FlateDecode")}
 	}
-	stream, contentRef, err := tree.Out.OpenStream(nil, 0, compress)
+	contentRef := tree.Out.Alloc()
+	stream, err := tree.Out.OpenStream(contentRef, nil, compress)
 	if err != nil {
 		return err
 	}
@@ -613,7 +615,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 	if page.Resources != nil {
 		dict["Resources"] = pdf.AsDict(page.Resources)
 	}
-	_, err = tree.AppendPage(dict, 0)
+	err = tree.AppendPage(dict)
 	if err != nil {
 		return err
 	}
