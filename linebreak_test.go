@@ -31,7 +31,7 @@ func TestLineBreaks(t *testing.T) {
 	hSize := math.Round(15 / 2.54 * 72)
 	const fontSize = 10
 
-	doc, err := document.CreateSinglePage("test_LineBreaks.pdf", paper.URx, paper.URy)
+	doc, err := document.CreateSinglePage("test_LineBreaks.pdf", paper.URx, paper.URy, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
