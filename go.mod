@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	golang.org/x/text v0.8.0
-	seehuhn.de/go/pdf v0.3.1
+	seehuhn.de/go/pdf v0.3.2-0.20230501091835-ce4b051b5256
 	seehuhn.de/go/sfnt v0.0.0-20230316145804-ab7e8aec73c2
 )
 

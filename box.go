@@ -64,7 +64,7 @@ type ruleBox struct {
 	BoxExtent
 }
 
-// Draw implements the Box interface.
+// Draw implements the [Box] interface.
 func (obj *ruleBox) Draw(page *graphics.Page, xPos, yPos float64) {
 	if obj.Width > 0 && obj.Depth+obj.Height > 0 {
 		page.Rectangle(xPos, yPos-obj.Depth, obj.Width, obj.Depth+obj.Height)
@@ -75,7 +75,7 @@ func (obj *ruleBox) Draw(page *graphics.Page, xPos, yPos float64) {
 // Kern represents a fixed amount of space between boxes.
 type Kern float64
 
-// Extent implements the Box interface.
+// Extent implements the [Box] interface.
 func (obj Kern) Extent() *BoxExtent {
 	return &BoxExtent{
 		Width:          float64(obj),
@@ -84,7 +84,7 @@ func (obj Kern) Extent() *BoxExtent {
 	}
 }
 
-// Draw implements the Box interface.
+// Draw implements the [Box] interface.
 func (obj Kern) Draw(page *graphics.Page, xPos, yPos float64) {}
 
 // Raise raises the box by the given amount.
@@ -171,7 +171,7 @@ type hBox struct {
 	Contents []Box
 }
 
-// Draw implements the Box interface.
+// Draw implements the [Box] interface.
 func (obj *hBox) Draw(page *graphics.Page, xPos, yPos float64) {
 	xx := horizontalLayout(xPos, obj.Width, obj.Contents...)
 	for i, box := range obj.Contents {

@@ -38,7 +38,7 @@ type FontInfo struct {
 	Color color.Color
 }
 
-// Text returns a new Text object.
+// Text returns a new [TextBox] object.
 func Text(F *FontInfo, text string) *TextBox {
 	return &TextBox{
 		F:      F,
@@ -46,7 +46,7 @@ func Text(F *FontInfo, text string) *TextBox {
 	}
 }
 
-// Extent implements the Box interface
+// Extent implements the [Box] interface
 func (obj *TextBox) Extent() *BoxExtent {
 	font := obj.F.Font
 	geom := font.GetGeometry()
@@ -83,18 +83,18 @@ func (obj *TextBox) Extent() *BoxExtent {
 	}
 }
 
-// Draw implements the Box interface.
+// Draw implements the [Box] interface.
 func (obj *TextBox) Draw(page *graphics.Page, xPos, yPos float64) {
 	font := obj.F.Font
 
-	page.BeginText()
-	page.SetFont(font, obj.F.Size)
+	page.TextStart()
+	page.TextSetFont(font, obj.F.Size)
 	if obj.F.Color != nil {
 		page.SetFillColor(obj.F.Color)
 	} else {
 		page.SetFillColor(color.Default)
 	}
-	page.StartLine(xPos, yPos)
-	page.ShowGlyphs(obj.Glyphs)
-	page.EndText()
+	page.TextFirstLine(xPos, yPos)
+	page.TextShowGlyphs(obj.Glyphs)
+	page.TextEnd()
 }

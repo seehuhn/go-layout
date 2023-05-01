@@ -127,12 +127,12 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		}
 
 		// show the box types
-		page.BeginText()
-		page.SetFont(F, 7)
+		page.TextStart()
+		page.TextSetFont(F, 7)
 		if ext.WhiteSpaceOnly {
-			page.StartLine(leftMargin+2, yMid-2)
+			page.TextFirstLine(leftMargin+2, yMid-2)
 		} else {
-			page.StartLine(leftMargin+2, yAscent-1)
+			page.TextFirstLine(leftMargin+2, yAscent-1)
 		}
 		var label string
 		switch obj := box.(type) {
@@ -156,8 +156,8 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		default:
 			label = fmt.Sprintf("%T", box)
 		}
-		page.ShowText(label)
-		page.EndText()
+		page.TextShow(label)
+		page.TextEnd()
 
 		// draw the geometry annotations
 		page.PushGraphicsState()
@@ -202,12 +202,12 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 			label = label + fmt.Sprintf(" minus %s", formatS(shr.GetShrink()))
 		}
 		if !ext.WhiteSpaceOnly || label != "0" {
-			page.BeginText()
+			page.TextStart()
 			page.SetFillColor(geomColor)
-			page.SetFont(F, 7)
-			page.StartLine(leftMargin+width+15, yMid-2)
-			page.ShowText(label)
-			page.EndText()
+			page.TextSetFont(F, 7)
+			page.TextFirstLine(leftMargin+width+15, yMid-2)
+			page.TextShow(label)
+			page.TextEnd()
 		}
 
 		// draw a mark to indicate the target height
@@ -238,11 +238,11 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		}
 
 		y := yTop - vPos[c.pos]
-		page.BeginText()
-		page.SetFont(F, 7)
-		page.StartLine(x, y-3)
-		page.ShowTextAligned(fmt.Sprintf("— b=%s, p=%s —", format(c.badness), format(float64(c.penalty))), 0, 0.5)
-		page.EndText()
+		page.TextStart()
+		page.TextSetFont(F, 7)
+		page.TextFirstLine(x, y-3)
+		page.TextShowAligned(fmt.Sprintf("— b=%s, p=%s —", format(c.badness), format(float64(c.penalty))), 0, 0.5)
+		page.TextEnd()
 	}
 	page.PopGraphicsState()
 
@@ -259,12 +259,12 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	total.Length += topSkip
 
 	if topSkip > 0 {
-		page.BeginText()
+		page.TextStart()
 		page.SetFillColor(breakColor)
-		page.SetFont(F, 7)
-		page.StartLine(leftMargin+width+15, yTop+5)
-		page.ShowText(fmt.Sprintf("%s (topskip)", format(topSkip)))
-		page.EndText()
+		page.TextSetFont(F, 7)
+		page.TextFirstLine(leftMargin+width+15, yTop+5)
+		page.TextShow(fmt.Sprintf("%s (topskip)", format(topSkip)))
+		page.TextEnd()
 	}
 	prevDept := 0.0
 	for i := 0; i < bestPos; i++ {
@@ -284,33 +284,33 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 			total.Shrink.IncrementBy(shrink.GetShrink())
 		}
 
-		page.BeginText()
+		page.TextStart()
 		page.SetFillColor(breakColor)
-		page.SetFont(F, 7)
-		page.StartLine(leftMargin+width-30, yTop-vPos[i+1]-2)
-		page.ShowText(fmt.Sprintf("%s plus %s minus %s",
+		page.TextSetFont(F, 7)
+		page.TextFirstLine(leftMargin+width-30, yTop-vPos[i+1]-2)
+		page.TextShow(fmt.Sprintf("%s plus %s minus %s",
 			format(total.Length), formatS(total.Stretch), formatS(total.Shrink)))
-		page.EndText()
+		page.TextEnd()
 	}
 	y := yTop - vPos[bestPos] - 12
 	if b := e.BottomGlue; b != nil {
-		page.BeginText()
+		page.TextStart()
 		page.SetFillColor(breakColor)
-		page.SetFont(F, 7)
-		page.StartLine(leftMargin+width+15, y)
-		page.ShowText(fmt.Sprintf("%s plus %s minus %s (bottomglue)",
+		page.TextSetFont(F, 7)
+		page.TextFirstLine(leftMargin+width+15, y)
+		page.TextShow(fmt.Sprintf("%s plus %s minus %s (bottomglue)",
 			format(b.Length), formatS(b.Stretch), formatS(b.Shrink)))
-		page.EndText()
+		page.TextEnd()
 		total.Add(b)
 		y -= 10
 
-		page.BeginText()
+		page.TextStart()
 		page.SetFillColor(breakColor)
-		page.SetFont(F, 7)
-		page.StartLine(leftMargin+width-30, y)
-		page.ShowText(fmt.Sprintf("%s plus %s minus %s",
+		page.TextSetFont(F, 7)
+		page.TextFirstLine(leftMargin+width-30, y)
+		page.TextShow(fmt.Sprintf("%s plus %s minus %s",
 			format(total.Length), formatS(total.Stretch), formatS(total.Shrink)))
-		page.EndText()
+		page.TextEnd()
 		y -= 10
 	}
 
@@ -562,12 +562,12 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 		page.Stroke()
 		page.PopGraphicsState()
 
-		page.BeginText()
-		page.SetFont(F, 6)
+		page.TextStart()
+		page.TextSetFont(F, 6)
 		page.SetFillColor(annotationColor)
-		page.StartLine(leftMargin+e.TextWidth+72+10, y+4)
+		page.TextFirstLine(leftMargin+e.TextWidth+72+10, y+4)
 		total := totalWidthAndGlue(lineContents[i])
-		page.ShowText(fmt.Sprintf("%+.1f", e.TextWidth-total.Length))
+		page.TextShow(fmt.Sprintf("%+.1f", e.TextWidth-total.Length))
 		var r float64
 		if total.Length > e.TextWidth+0.05 {
 			r = (e.TextWidth - total.Length) / total.Shrink.Val
@@ -576,7 +576,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 				r = 0
 				label = " / inf"
 			}
-			page.ShowText(label)
+			page.TextShow(label)
 		} else if total.Length < e.TextWidth-0.05 {
 			r = (e.TextWidth - total.Length) / total.Stretch.Val
 			label := fmt.Sprintf(" / %.1f (%.0f%%)", total.Stretch.Val, 100*r)
@@ -584,15 +584,15 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 				r = 0
 				label = " / inf"
 			}
-			page.ShowText(label)
+			page.TextShow(label)
 		}
-		page.StartNextLine(0, -7)
-		page.ShowTextAligned(fmt.Sprintf(" r = %.2f", r), 30, 0)
+		page.TextSecondLine(0, -7)
+		page.TextShowAligned(fmt.Sprintf(" r = %.2f", r), 30, 0)
 		c := getFitnessClass(r)
 		if c != fitnessDecent {
-			page.ShowTextAligned(c.String(), 25, 1)
+			page.TextShowAligned(c.String(), 25, 1)
 		}
-		page.EndText()
+		page.TextEnd()
 
 		y -= ext.Depth
 		y -= 10
