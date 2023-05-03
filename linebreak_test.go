@@ -23,15 +23,14 @@ import (
 	"golang.org/x/text/language"
 	"seehuhn.de/go/pdf/document"
 	"seehuhn.de/go/pdf/font/simple"
-	"seehuhn.de/go/pdf/pagetree"
 )
 
 func TestLineBreaks(t *testing.T) {
-	paper := pagetree.A4
+	paper := document.A4
 	hSize := math.Round(15 / 2.54 * 72)
 	const fontSize = 10
 
-	doc, err := document.CreateSinglePage("test_LineBreaks.pdf", paper.URx, paper.URy, nil)
+	doc, err := document.CreateSinglePage("test_LineBreaks.pdf", paper, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
