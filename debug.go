@@ -82,10 +82,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	}
 	visualHeight := vPos[len(vPos)-1]
 
-	compress := &pdf.FilterInfo{Name: pdf.Name("LZWDecode")}
-	if tree.Out.Version >= pdf.V1_2 {
-		compress = &pdf.FilterInfo{Name: pdf.Name("FlateDecode")}
-	}
+	compress := &pdf.FilterInfo{Name: pdf.CompressFilter}
 	contentRef := tree.Out.Alloc()
 	stream, err := tree.Out.OpenStream(contentRef, nil, compress)
 	if err != nil {
@@ -452,10 +449,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 	// Now we have gathered all the lines.
 	// Create a page which shows the line breaks.
 
-	compress := &pdf.FilterInfo{Name: pdf.Name("LZWDecode")}
-	if tree.Out.Version >= pdf.V1_2 {
-		compress = &pdf.FilterInfo{Name: pdf.Name("FlateDecode")}
-	}
+	compress := &pdf.FilterInfo{Name: pdf.CompressFilter}
 	contentRef := tree.Out.Alloc()
 	stream, err := tree.Out.OpenStream(contentRef, nil, compress)
 	if err != nil {
