@@ -36,5 +36,7 @@ seehuhn.de/go/dijkstra v0.9.3 h1:uVbFjlAuhlwV45qM7S4Wz+C7XlfbgAaTfcZX1r8OgIA=
 seehuhn.de/go/dijkstra v0.9.3/go.mod h1:YcrFNNQ1BIVFI0xIYnNa/StiSKQXuQIID8zgZjwAOFE=
 seehuhn.de/go/pdf v0.3.3-0.20230509130216-768225a3e273 h1:ZmI2GJ39ZE17wEKrS8gBdFoFyHdqyt4nXOrqcC/PO7U=
 seehuhn.de/go/pdf v0.3.3-0.20230509130216-768225a3e273/go.mod h1:97zTj3oI5m9zRmdfSU0k9At4S+kv4QmXUqEVRksaYoU=
+seehuhn.de/go/pdf v0.3.3-0.20230512060733-78d2e9a31d0c h1:VVhYRhNXQ+GAFCuyHgWh46DRsROzszo7SKhQoPH26MM=
+seehuhn.de/go/pdf v0.3.3-0.20230512060733-78d2e9a31d0c/go.mod h1:97zTj3oI5m9zRmdfSU0k9At4S+kv4QmXUqEVRksaYoU=
 seehuhn.de/go/sfnt v0.3.1-0.20230509130111-5dca324be3dc h1:bnJGFd7MxmTdmjgAiZ/8R3QTcyOvLrjSfqfy7yDlO3s=
 seehuhn.de/go/sfnt v0.3.1-0.20230509130111-5dca324be3dc/go.mod h1:p9z8J4lA2MzzJkUFJlYlFC2EkC2mXjwTxWxdG/GynNY=
