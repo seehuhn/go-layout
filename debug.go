@@ -82,9 +82,8 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	}
 	visualHeight := vPos[len(vPos)-1]
 
-	compress := &pdf.FilterInfo{Name: pdf.CompressFilter}
 	contentRef := tree.Out.Alloc()
-	stream, err := tree.Out.OpenStream(contentRef, nil, compress)
+	stream, err := tree.Out.OpenStream(contentRef, nil, pdf.FilterCompress{})
 	if err != nil {
 		return err
 	}
@@ -449,9 +448,8 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 	// Now we have gathered all the lines.
 	// Create a page which shows the line breaks.
 
-	compress := &pdf.FilterInfo{Name: pdf.CompressFilter}
 	contentRef := tree.Out.Alloc()
-	stream, err := tree.Out.OpenStream(contentRef, nil, compress)
+	stream, err := tree.Out.OpenStream(contentRef, nil, pdf.FilterCompress{})
 	if err != nil {
 		return err
 	}

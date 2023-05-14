@@ -50,9 +50,8 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, final bool) error {
 			panic("unexpected records")
 		}
 
-		compress := &pdf.FilterInfo{Name: pdf.CompressFilter}
 		contentRef := tree.Out.Alloc()
-		stream, err := tree.Out.OpenStream(contentRef, nil, compress)
+		stream, err := tree.Out.OpenStream(contentRef, nil, pdf.FilterCompress{})
 		if err != nil {
 			return err
 		}
