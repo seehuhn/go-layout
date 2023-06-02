@@ -80,6 +80,7 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, final bool) error {
 		pageDict := pdf.Dict{
 			"Type":     pdf.Name("Page"),
 			"Contents": contentRef,
+			"MediaBox": e.PageSize,
 		}
 		if page.Resources != nil {
 			pageDict["Resources"] = pdf.AsDict(page.Resources)

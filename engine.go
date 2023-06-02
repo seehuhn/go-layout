@@ -45,6 +45,8 @@ type hModePenalty struct {
 }
 
 type Engine struct {
+	PageSize *pdf.Rectangle
+
 	TextWidth   float64
 	ParIndent   *Glue
 	LeftSkip    *Glue
