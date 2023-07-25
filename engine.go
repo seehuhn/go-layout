@@ -20,11 +20,13 @@ import (
 	"math"
 	"unicode"
 
+	"seehuhn.de/go/postscript/funit"
+
+	"seehuhn.de/go/sfnt/glyph"
+
 	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/graphics"
-	"seehuhn.de/go/sfnt/funit"
-	"seehuhn.de/go/sfnt/glyph"
 )
 
 // A list of horizontal mode items can contain the following types:
