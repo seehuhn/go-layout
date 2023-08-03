@@ -24,7 +24,7 @@ import (
 	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/color"
 	"seehuhn.de/go/pdf/font"
-	"seehuhn.de/go/pdf/font/builtin"
+	"seehuhn.de/go/pdf/font/type1"
 	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/pdf/pagetree"
 )
@@ -44,7 +44,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		breakColor = color.RGB(0.9, 0, 0)
 	)
 
-	F, err := builtin.TimesRoman.Embed(tree.Out, "Q")
+	F, err := type1.TimesRoman.Embed(tree.Out, "Q")
 	if err != nil {
 		return err
 	}
