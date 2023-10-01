@@ -266,7 +266,7 @@ func (br *knuthPlassLineBreaker) AdjustmentRatio(a *knuthPlassNode, b int) float
 	return 0
 }
 
-type fitnessClass int
+type fitnessClass int8
 
 const (
 	fitnessTight     fitnessClass = -1
