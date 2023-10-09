@@ -38,6 +38,11 @@ type Glue struct {
 	Shrink  glueAmount
 }
 
+func (g *Glue) isInfiniteShrink() bool {
+	shrink := g.Shrink
+	return shrink.Val != 0 && shrink.Order > 0
+}
+
 func (g *Glue) Plus(other *Glue) *Glue {
 	if other == nil {
 		return g.Clone()
