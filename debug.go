@@ -454,9 +454,8 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 		return err
 	}
 	page := graphics.NewPage(stream)
-	page.AddExtGState("gs:t", pdf.Dict{
-		"ca": pdf.Real(0.75), // fill alpha
-	})
+
+	gs := graphics.MakeExtGState(&graphics.State{FillAlpha: 0.75}, graphics.StateFillAlpha, "gs:t")
 
 	visualHeight := 0.0
 	for _, box := range lineBoxes {
@@ -515,7 +514,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 		page.ClipNonZero()
 		page.EndPath()
 		overflow.Draw(page, xEnd, y)
-		page.SetExtGState("gs:t")
+		page.SetExtGState(gs)
 		page.SetFillColor(color.RGB(1, 1, 1))
 		page.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
 		page.Fill()
