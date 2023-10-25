@@ -36,8 +36,6 @@ seehuhn.de/go/dag v0.0.0-20230612165854-b02059e84ec5 h1:X3EdZgozH+/MKCx+N/1ZkEfN
 seehuhn.de/go/dag v0.0.0-20230612165854-b02059e84ec5/go.mod h1:se0NAaAL9aI9pRBRK0EvlY3572GJTsF0J7RwMXEiKz4=
 seehuhn.de/go/dijkstra v0.9.3 h1:uVbFjlAuhlwV45qM7S4Wz+C7XlfbgAaTfcZX1r8OgIA=
 seehuhn.de/go/dijkstra v0.9.3/go.mod h1:YcrFNNQ1BIVFI0xIYnNa/StiSKQXuQIID8zgZjwAOFE=
-seehuhn.de/go/pdf v0.3.6 h1:4UWds4jAk/rE2xHXSSJV3ErL+OQQbH+jY7TWdkts1dU=
-seehuhn.de/go/pdf v0.3.6/go.mod h1:PgJUQWEiuDFkAqzJApqMBLVBxa61MsdDYJ0reYv0n/Y=
 seehuhn.de/go/pdf v0.3.7-0.20231025101207-baf6a388b372 h1:ln9Ayn79zdVujJC6arVhdEY1Mm58kTMWhUEeR1YRyK0=
 seehuhn.de/go/pdf v0.3.7-0.20231025101207-baf6a388b372/go.mod h1:PgJUQWEiuDFkAqzJApqMBLVBxa61MsdDYJ0reYv0n/Y=
 seehuhn.de/go/postscript v0.3.6 h1:mR9zTLkKz4ji3b/TXyxW8caXjSzPfJp6FIRtua/jsBo=
