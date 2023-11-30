@@ -88,7 +88,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	if err != nil {
 		return err
 	}
-	page := graphics.NewPage(stream)
+	page := graphics.NewPage(stream, pdf.GetVersion(tree.Out))
 
 	yTop := bottomMargin + visualHeight
 	target := height
@@ -358,6 +358,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	return nil
 }
 
+// DebugLineBreaks creates a PDF page which explains the line break decisions.
 func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 	// This must match the code in [Engine.EndParagraph]
 
@@ -454,7 +455,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 	if err != nil {
 		return err
 	}
-	page := graphics.NewPage(stream)
+	page := graphics.NewPage(stream, pdf.GetVersion(tree.Out))
 
 	gs := graphics.MakeExtGState(graphics.State{Parameters: &graphics.Parameters{FillAlpha: 0.75}, Set: graphics.StateFillAlpha}, "gs:t")
 

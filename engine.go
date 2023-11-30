@@ -46,6 +46,7 @@ type hModePenalty struct {
 	flagged bool
 }
 
+// Engine is the main layout engine.
 type Engine struct {
 	PageSize *pdf.Rectangle
 

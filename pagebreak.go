@@ -55,7 +55,7 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, final bool) error {
 		if err != nil {
 			return err
 		}
-		page := graphics.NewPage(stream)
+		page := graphics.NewPage(stream, pdf.GetVersion(tree.Out))
 
 		if e.BeforePageFunc != nil {
 			err = e.BeforePageFunc(e.PageNumber, page)
