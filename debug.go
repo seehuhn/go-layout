@@ -29,6 +29,7 @@ import (
 	"seehuhn.de/go/pdf/pagetree"
 )
 
+// DebugPageBreak creates a PDF page which explains the page break decisions.
 func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	const (
 		overshot     = 1.4
@@ -455,7 +456,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 	}
 	page := graphics.NewPage(stream)
 
-	gs := graphics.MakeExtGState(&graphics.State{FillAlpha: 0.75}, graphics.StateFillAlpha, "gs:t")
+	gs := graphics.MakeExtGState(graphics.State{Parameters: &graphics.Parameters{FillAlpha: 0.75}, Set: graphics.StateFillAlpha}, "gs:t")
 
 	visualHeight := 0.0
 	for _, box := range lineBoxes {
