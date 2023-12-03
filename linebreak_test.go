@@ -53,7 +53,7 @@ func TestLineBreaks(t *testing.T) {
 
 	paragraph := VTop(e.vList...)
 
-	paragraph.Draw(doc.Page, 72, 25/2.54*72)
+	paragraph.Draw(doc.Writer, 72, 25/2.54*72)
 
 	err = doc.Close()
 	if err != nil {

@@ -67,8 +67,8 @@ type Engine struct {
 	WidowPenalty     float64
 
 	PageNumber     int
-	BeforePageFunc func(int, *graphics.Page) error
-	AfterPageFunc  func(int, *graphics.Page) error
+	BeforePageFunc func(int, *graphics.Writer) error
+	AfterPageFunc  func(int, *graphics.Writer) error
 	AfterCloseFunc func(pageDict pdf.Dict) error
 
 	DebugPageNumber int
@@ -255,7 +255,7 @@ func (obj penalty) Extent() *BoxExtent {
 	return &BoxExtent{WhiteSpaceOnly: true}
 }
 
-func (obj penalty) Draw(page *graphics.Page, xPos, yPos float64) {
+func (obj penalty) Draw(page *graphics.Writer, xPos, yPos float64) {
 	// pass
 }
 

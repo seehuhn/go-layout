@@ -84,7 +84,7 @@ func (obj *TextBox) Extent() *BoxExtent {
 }
 
 // Draw implements the [Box] interface.
-func (obj *TextBox) Draw(page *graphics.Page, xPos, yPos float64) {
+func (obj *TextBox) Draw(page *graphics.Writer, xPos, yPos float64) {
 	font := obj.F.Font
 
 	page.TextStart()

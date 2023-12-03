@@ -25,7 +25,7 @@ import (
 // Box represents marks on a page within a rectangular area of known size.
 type Box interface {
 	Extent() *BoxExtent
-	Draw(page *graphics.Page, xPos, yPos float64)
+	Draw(page *graphics.Writer, xPos, yPos float64)
 }
 
 // BoxExtent gives the dimensions of a Box.
@@ -65,7 +65,7 @@ type ruleBox struct {
 }
 
 // Draw implements the [Box] interface.
-func (obj *ruleBox) Draw(page *graphics.Page, xPos, yPos float64) {
+func (obj *ruleBox) Draw(page *graphics.Writer, xPos, yPos float64) {
 	if obj.Width > 0 && obj.Depth+obj.Height > 0 {
 		page.Rectangle(xPos, yPos-obj.Depth, obj.Width, obj.Depth+obj.Height)
 		page.Fill()
@@ -85,7 +85,7 @@ func (obj Kern) Extent() *BoxExtent {
 }
 
 // Draw implements the [Box] interface.
-func (obj Kern) Draw(page *graphics.Page, xPos, yPos float64) {}
+func (obj Kern) Draw(page *graphics.Writer, xPos, yPos float64) {}
 
 // Raise raises the box by the given amount.
 func Raise(delta float64, box Box) Box {
@@ -110,7 +110,7 @@ func (obj raiseBox) Extent() *BoxExtent {
 	}
 }
 
-func (obj raiseBox) Draw(page *graphics.Page, xPos, yPos float64) {
+func (obj raiseBox) Draw(page *graphics.Writer, xPos, yPos float64) {
 	obj.box.Draw(page, xPos, yPos+obj.delta)
 }
 
@@ -172,7 +172,7 @@ type hBox struct {
 }
 
 // Draw implements the [Box] interface.
-func (obj *hBox) Draw(page *graphics.Page, xPos, yPos float64) {
+func (obj *hBox) Draw(page *graphics.Writer, xPos, yPos float64) {
 	xx := horizontalLayout(xPos, obj.Width, obj.Contents...)
 	for i, box := range obj.Contents {
 		box.Draw(page, xx[i], yPos)
@@ -279,7 +279,7 @@ type vBox struct {
 	Contents []Box
 }
 
-func (obj *vBox) Draw(page *graphics.Page, xPos, yPos float64) {
+func (obj *vBox) Draw(page *graphics.Writer, xPos, yPos float64) {
 	yy := verticalLayout(yPos+obj.Height, obj.Height+obj.Depth, obj.Contents...)
 	for i, box := range obj.Contents {
 		box.Draw(page, xPos, yy[i])

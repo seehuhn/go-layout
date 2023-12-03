@@ -120,7 +120,7 @@ func (obj *Glue) Extent() *BoxExtent {
 	}
 }
 
-func (obj *Glue) Draw(page *graphics.Page, xPos, yPos float64) {}
+func (obj *Glue) Draw(page *graphics.Writer, xPos, yPos float64) {}
 
 func (obj *Glue) GetStretch() glueAmount {
 	return obj.Stretch

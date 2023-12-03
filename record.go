@@ -27,7 +27,7 @@ type recordPageLocation struct {
 	cb []func(*BoxInfo)
 }
 
-func (r *recordPageLocation) Draw(page *graphics.Page, xPos, yPos float64) {
+func (r *recordPageLocation) Draw(page *graphics.Writer, xPos, yPos float64) {
 	ext := r.Extent()
 
 	// TODO(voss): undo any coordinate transformations the user may have
