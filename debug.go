@@ -457,7 +457,13 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 	}
 	page := graphics.NewWriter(stream, pdf.GetVersion(tree.Out))
 
-	gs := graphics.NewExtGState(graphics.State{Parameters: &graphics.Parameters{FillAlpha: 0.75}, Set: graphics.StateFillAlpha}, "gs:t")
+	state := graphics.State{}
+	state.FillAlpha = 0.75
+	state.Set = graphics.StateFillAlpha
+	gs, err := graphics.NewExtGState(state, "gs:t")
+	if err != nil {
+		return err
+	}
 
 	visualHeight := 0.0
 	for _, box := range lineBoxes {
