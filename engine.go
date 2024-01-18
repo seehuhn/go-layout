@@ -123,7 +123,7 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 				if gid != 0 {
 					w := geom.Widths[gid]
 					gg = append(gg, glyph.Info{
-						Gid:     gid,
+						GID:     gid,
 						Text:    append(rr, r),
 						Advance: w,
 					})
@@ -136,7 +136,7 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 			gg[len(gg)-1].Advance -= width // no width for space glyphs, since we add glue below
 			if len(rr) > 0 {
 				gg = append(gg, glyph.Info{
-					Gid:  spaceGID,
+					GID:  spaceGID,
 					Text: rr,
 				})
 			}
@@ -165,7 +165,7 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 		}
 	}
 	addRunes := func() {
-		gg := F.Font.Layout(string(run), F.Size)
+		gg := F.Font.Layout(string(run))
 		box := &TextBox{F: F, Glyphs: gg}
 		e.hList = append(e.hList, &hModeBox{
 			Box:   box,

@@ -6,9 +6,9 @@ toolchain go1.21.0
 
 require (
 	golang.org/x/text v0.14.0
-	seehuhn.de/go/pdf v0.3.7-0.20231205063340-04631b1c6f9b
-	seehuhn.de/go/postscript v0.3.7-0.20231025105403-77fee8e215d5
-	seehuhn.de/go/sfnt v0.3.7-0.20231025105648-5fcec729ef11
+	seehuhn.de/go/pdf v0.3.7-0.20240118085500-cc1c7ef46bf9
+	seehuhn.de/go/postscript v0.3.7-0.20240118084632-50e7b2e06fc9
+	seehuhn.de/go/sfnt v0.3.7-0.20240118085017-28629b59c10b
 )
 
 require (

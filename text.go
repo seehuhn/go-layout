@@ -42,7 +42,7 @@ type FontInfo struct {
 func Text(F *FontInfo, text string) *TextBox {
 	return &TextBox{
 		F:      F,
-		Glyphs: F.Font.Layout(text, F.Size),
+		Glyphs: F.Font.Layout(text),
 	}
 }
 
@@ -61,7 +61,7 @@ func (obj *TextBox) Extent() *BoxExtent {
 		thisDepth := geom.Descent.AsFloat(q)
 		thisHeight := geom.Ascent.AsFloat(q)
 		if geom.GlyphExtents != nil {
-			bbox := &geom.GlyphExtents[glyph.Gid]
+			bbox := &geom.GlyphExtents[glyph.GID]
 			if bbox.IsZero() {
 				continue
 			}
