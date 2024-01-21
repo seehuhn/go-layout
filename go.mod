@@ -14,6 +14,7 @@ require (
 require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	golang.org/x/exp v0.0.0-20231127185646-65229373498e // indirect
+	golang.org/x/image v0.15.0 // indirect
 	seehuhn.de/go/dag v0.0.0-20230612165854-b02059e84ec5 // indirect
 	seehuhn.de/go/dijkstra v0.9.3 // indirect
 )
