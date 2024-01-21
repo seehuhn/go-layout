@@ -95,6 +95,6 @@ func (obj *TextBox) Draw(page *graphics.Writer, xPos, yPos float64) {
 		page.SetFillColor(color.Default)
 	}
 	page.TextFirstLine(xPos, yPos)
-	page.TextShowGlyphs(obj.Glyphs)
+	page.TextShowGlyphsOld(obj.Glyphs)
 	page.TextEnd()
 }
