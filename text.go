@@ -33,7 +33,7 @@ type TextBox struct {
 }
 
 type FontInfo struct {
-	Font  font.Embedded
+	Font  font.Layouter
 	Size  float64
 	Color color.Color
 }
