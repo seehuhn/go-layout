@@ -89,13 +89,25 @@ type BoxInfo struct {
 	PageNo  int
 }
 
+// getGID returns the glyph ID and advance width for a given rune.
+// A glyph ID of 0 indicates that the rune is not supported by the font.
+//
+// TODO(voss): remove?
+func getGID(font font.Layouter, r rune) (glyph.ID, funit.Int16) {
+	gg := font.Layout(string(r))
+	if len(gg) != 1 {
+		return 0, 0
+	}
+	return gg[0].GID, gg[0].Advance
+}
+
 func (e *Engine) HAddText(F *FontInfo, text string) {
 	if len(e.hList) == 0 && e.ParIndent != nil {
 		e.hList = append(e.hList, e.ParIndent)
 	}
 
 	geom := F.Font.GetGeometry()
-	spaceGID, spaceWidth := font.GetGID(F.Font, ' ')
+	spaceGID, spaceWidth := getGID(F.Font, ' ')
 	if spaceGID == 0 {
 		spaceWidth = funit.Int16(geom.UnitsPerEm / 4)
 	}
@@ -119,7 +131,7 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 			var rr []rune
 			var width funit.Int16
 			for _, r := range run {
-				gid, _ := font.GetGID(F.Font, r)
+				gid, _ := getGID(F.Font, r)
 				if gid != 0 {
 					w := geom.Widths[gid]
 					gg = append(gg, glyph.Info{

@@ -35,7 +35,7 @@ func TestLineBreaks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	F1, err := simple.EmbedFile(doc.Out, "../otf/SourceSerif4-Regular.otf", "F1", language.BritishEnglish)
+	F1, err := simple.EmbedOpenType(doc.Out, "../otf/SourceSerif4-Regular.otf", "F1", language.BritishEnglish)
 	if err != nil {
 		t.Fatal(err)
 	}
