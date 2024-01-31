@@ -58,8 +58,8 @@ func (obj *TextBox) Extent() *BoxExtent {
 	for _, glyph := range obj.Glyphs {
 		width += glyph.Advance.AsFloat(q)
 
-		thisDepth := geom.Descent.AsFloat(q)
-		thisHeight := geom.Ascent.AsFloat(q)
+		thisDepth := geom.Descent * obj.F.Size
+		thisHeight := geom.Ascent * obj.F.Size
 		if geom.GlyphExtents != nil {
 			bbox := &geom.GlyphExtents[glyph.GID]
 			if bbox.IsZero() {

@@ -45,7 +45,7 @@ func TestLineBreaks(t *testing.T) {
 		TextWidth:    hSize,
 		RightSkip:    &Glue{Stretch: glueAmount{Val: 36, Order: 0}},
 		ParFillSkip:  Skip(0, 1, 1, 0, 0),
-		BaseLineSkip: geom.ToPDF16(fontSize, geom.BaseLineDistance),
+		BaseLineSkip: fontSize * geom.BaseLineDistance,
 	}
 
 	e.HAddText(&FontInfo{Font: F1, Size: 10}, testText)
