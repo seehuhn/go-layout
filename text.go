@@ -49,7 +49,6 @@ func Text(F *FontInfo, text string) *TextBox {
 func (obj *TextBox) Extent() *BoxExtent {
 	font := obj.F.Font
 	geom := font.GetGeometry()
-	q := obj.F.Size / float64(geom.UnitsPerEm)
 
 	width := 0.0
 	height := math.Inf(-1)
@@ -57,16 +56,13 @@ func (obj *TextBox) Extent() *BoxExtent {
 	for _, glyph := range obj.Glyphs.Seq {
 		width += glyph.Advance
 
-		thisDepth := geom.Descent * obj.F.Size
-		thisHeight := geom.Ascent * obj.F.Size
-		if geom.GlyphExtents != nil {
-			bbox := &geom.GlyphExtents[glyph.GID]
-			if bbox.IsZero() {
-				continue
-			}
-			thisDepth = -(bbox.LLy.AsFloat(q) + glyph.Rise)
-			thisHeight = (bbox.URy.AsFloat(q) + glyph.Rise)
+		bbox := &geom.GlyphExtents[glyph.GID]
+		if bbox.IsZero() {
+			continue
 		}
+		thisDepth := -(bbox.LLy*obj.F.Size + glyph.Rise)
+		thisHeight := (bbox.URy*obj.F.Size + glyph.Rise)
+
 		if thisDepth > depth {
 			depth = thisDepth
 		}

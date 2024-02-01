@@ -157,7 +157,7 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 		box := &TextBox{F: F, Glyphs: gg}
 		e.hList = append(e.hList, &hModeBox{
 			Box:   box,
-			width: gg.TotalLength(),
+			width: gg.TotalWidth(),
 		})
 		run = run[:0]
 	}

@@ -5,8 +5,8 @@ github.com/xdg-go/stringprep v1.0.4/go.mod h1:mPGuuIYwz7CmR2bT9j4GbQqutWS1zV24gi
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=
-golang.org/x/exp v0.0.0-20231127185646-65229373498e h1:Gvh4YaCaXNs6dKTlfgismwWZKyjVZXwOPfIyUaqU3No=
-golang.org/x/exp v0.0.0-20231127185646-65229373498e/go.mod h1:iRJReGqOEeBhDZGkGbynYwcHlctCvnjTYIamk7uXpHI=
+golang.org/x/exp v0.0.0-20240119083558-1b970713d09a h1:Q8/wZp0KX97QFTc2ywcOE0YRjZPVIx+MXInMzdvQqcA=
+golang.org/x/exp v0.0.0-20240119083558-1b970713d09a/go.mod h1:idGWGoKP1toJGkd5/ig9ZLuPcZBC3ewk7SzmH0uou08=
 golang.org/x/image v0.15.0 h1:kOELfmgrmJlw4Cdb7g/QGuB3CvDrXbqEIww/pNtNBm8=
 golang.org/x/image v0.15.0/go.mod h1:HUYqC05R2ZcZ3ejNQsIHQDQiwWM4JBqmm6MKANTp4LE=
 golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4/go.mod h1:jJ57K6gSWd91VN4djpZkiMVwK6gcyfeH4XE8wZrZaV4=
@@ -36,9 +36,9 @@ seehuhn.de/go/dag v0.0.0-20230612165854-b02059e84ec5 h1:X3EdZgozH+/MKCx+N/1ZkEfN
 seehuhn.de/go/dag v0.0.0-20230612165854-b02059e84ec5/go.mod h1:se0NAaAL9aI9pRBRK0EvlY3572GJTsF0J7RwMXEiKz4=
 seehuhn.de/go/dijkstra v0.9.3 h1:uVbFjlAuhlwV45qM7S4Wz+C7XlfbgAaTfcZX1r8OgIA=
 seehuhn.de/go/dijkstra v0.9.3/go.mod h1:YcrFNNQ1BIVFI0xIYnNa/StiSKQXuQIID8zgZjwAOFE=
-seehuhn.de/go/pdf v0.3.7-0.20240201095240-5fd786e9cea9 h1:bkv3bIDTxVze5csSi5P7fjkU/poXpjafRRoS5NS0QRI=
-seehuhn.de/go/pdf v0.3.7-0.20240201095240-5fd786e9cea9/go.mod h1:1bkc0/FVRvA+owC99UNRILxzMa18F1nzMhhEDopcOew=
-seehuhn.de/go/postscript v0.3.7-0.20240125192807-ef0ef529fc55 h1:C0EWp1hPG51FWZDk0PaxI/eRZx076nUfP5RIkdbAJjY=
-seehuhn.de/go/postscript v0.3.7-0.20240125192807-ef0ef529fc55/go.mod h1:G3Bh9SsgQQfn31kN2N9EWc5tPwoTYPqRMcvocejTDLs=
-seehuhn.de/go/sfnt v0.3.7-0.20240201095021-9cf154304652 h1:ry1unRaddevJon4fBwkPB/X91GmcR+ijSXXdZG7VfLc=
-seehuhn.de/go/sfnt v0.3.7-0.20240201095021-9cf154304652/go.mod h1:Uk3BCluafSOJePidC03VmG3DsSPjLisaZ9T8PG64uN0=
+seehuhn.de/go/pdf v0.3.7-0.20240201131251-d9fb0bbcd0fa h1:jL36j9EVGu+lbEQP7y15nVGrXat2zZyRnMxeaEd2I74=
+seehuhn.de/go/pdf v0.3.7-0.20240201131251-d9fb0bbcd0fa/go.mod h1:B7oVoFxxGRDNZnY8+qffm3xuzR3Q5aQEDf1itQMb7Wk=
+seehuhn.de/go/postscript v0.3.7-0.20240201125759-e32692a39f00 h1:uGQHgkn9lmTO/STPCaJyqCDYTJhbcp8sm1wurog9dP0=
+seehuhn.de/go/postscript v0.3.7-0.20240201125759-e32692a39f00/go.mod h1:pdH1aBbqabnNhLo1DWDZtZ8O21i0Dve4dfOljvweqEE=
+seehuhn.de/go/sfnt v0.3.7-0.20240201130831-3e1e0755c3f6 h1:vTwszGiFATfmOUeykrdaLlACzht7cmjTHGq1FqIw4Tg=
+seehuhn.de/go/sfnt v0.3.7-0.20240201130831-3e1e0755c3f6/go.mod h1:ATn3WdzorPW5wFSsloqVbZHJgnhfFpIeBlCzJYS7BT8=
