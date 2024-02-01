@@ -18,9 +18,8 @@ package layout
 
 import (
 	"math"
+	"slices"
 	"unicode"
-
-	"seehuhn.de/go/postscript/funit"
 
 	"seehuhn.de/go/sfnt/glyph"
 
@@ -89,29 +88,20 @@ type BoxInfo struct {
 	PageNo  int
 }
 
-// getGID returns the glyph ID and advance width for a given rune.
-// A glyph ID of 0 indicates that the rune is not supported by the font.
-//
-// TODO(voss): remove?
-func getGID(font font.Layouter, r rune) (glyph.ID, funit.Int16) {
-	gg := font.Layout(string(r))
-	if len(gg) != 1 {
-		return 0, 0
-	}
-	return gg[0].GID, gg[0].Advance
-}
-
 func (e *Engine) HAddText(F *FontInfo, text string) {
 	if len(e.hList) == 0 && e.ParIndent != nil {
 		e.hList = append(e.hList, e.ParIndent)
 	}
 
-	geom := F.Font.GetGeometry()
-	spaceGID, spaceWidth := getGID(F.Font, ' ')
-	if spaceGID == 0 {
-		spaceWidth = funit.Int16(geom.UnitsPerEm / 4)
+	var spaceGID glyph.ID
+	var pdfSpaceWidth float64
+	seq := F.Font.Layout(F.Size, " ")
+	if len(seq.Seq) == 1 {
+		spaceGID = seq.Seq[0].GID
+		pdfSpaceWidth = seq.Seq[0].Advance
+	} else {
+		pdfSpaceWidth = F.Size / 4
 	}
-	pdfSpaceWidth := geom.ToPDF16(F.Size, spaceWidth)
 
 	spaceGlue := &Glue{
 		Length:  pdfSpaceWidth,
@@ -125,32 +115,14 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 	}
 
 	var run []rune
-	addSpace := func() {
+	flushSpace := func() {
 		if spaceGID != 0 {
-			var gg []glyph.Info
-			var rr []rune
-			var width funit.Int16
-			for _, r := range run {
-				gid, _ := getGID(F.Font, r)
-				if gid != 0 {
-					w := geom.Widths[gid]
-					gg = append(gg, glyph.Info{
-						GID:     gid,
-						Text:    append(rr, r),
-						Advance: w,
-					})
-					width += w
-					rr = nil
-				} else {
-					rr = append(rr, r)
-				}
-			}
-			gg[len(gg)-1].Advance -= width // no width for space glyphs, since we add glue below
-			if len(rr) > 0 {
-				gg = append(gg, glyph.Info{
-					GID:  spaceGID,
-					Text: rr,
-				})
+			gg := []font.Glyph{
+				{
+					GID:     spaceGID,
+					Text:    slices.Clone(run),
+					Advance: 0, // no width for space glyph, since we add glue below
+				},
 			}
 
 			var prevText *TextBox
@@ -160,28 +132,32 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 				}
 			}
 			if prevText != nil {
-				prevText.Glyphs = append(prevText.Glyphs, gg...)
+				prevText.Glyphs.Seq = append(prevText.Glyphs.Seq, gg...)
 			} else {
-				box := &TextBox{F: F, Glyphs: gg}
+				box := &TextBox{F: F, Glyphs: &font.GlyphSeq{Seq: gg}}
 				e.hList = append(e.hList, &hModeBox{Box: box})
 			}
 		}
-		run = run[:0]
 
-		if len(run) == 1 && run[0] == 0x200B { // ZERO WIDTH SPACE
-			e.hList = append(e.hList, &hModePenalty{})
-		} else if e.afterPunct {
+		// if len(run) == 1 && run[0] == 0x200B { // ZERO WIDTH SPACE
+		// 	e.hList = append(e.hList, &hModePenalty{})
+		// }
+
+		if e.afterPunct {
 			e.hList = append(e.hList, xSpaceGlue)
 		} else {
 			e.hList = append(e.hList, spaceGlue)
 		}
+
+		run = run[:0]
 	}
-	addRunes := func() {
-		gg := F.Font.Layout(string(run))
+
+	flushRunes := func() {
+		gg := F.Font.Layout(F.Size, string(run))
 		box := &TextBox{F: F, Glyphs: gg}
 		e.hList = append(e.hList, &hModeBox{
 			Box:   box,
-			width: geom.ToPDF(F.Size, gg.AdvanceWidth()),
+			width: gg.TotalLength(),
 		})
 		run = run[:0]
 	}
@@ -193,18 +169,14 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 			r != 0x202F { // NARROW NO-BREAK SPACE
 
 			if !e.afterSpace && len(run) > 0 {
-				addRunes()
+				flushRunes()
 			}
 
 			run = append(run, r)
 			e.afterSpace = true
-
-			if !e.afterSpace {
-				addSpace()
-			}
 		} else {
 			if e.afterSpace && len(run) > 0 {
-				addSpace()
+				flushSpace()
 			}
 
 			run = append(run, r)
@@ -214,9 +186,9 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 	}
 	if len(run) > 0 {
 		if e.afterSpace {
-			addSpace()
+			flushSpace()
 		} else {
-			addRunes()
+			flushRunes()
 		}
 	}
 }

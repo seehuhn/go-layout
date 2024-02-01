@@ -112,41 +112,41 @@ func (g *Glue) maxLength() float64 {
 	return g.Length + g.Stretch.Val
 }
 
-func (obj *Glue) Extent() *BoxExtent {
+func (g *Glue) Extent() *BoxExtent {
 	return &BoxExtent{
-		Width:          obj.Length,
-		Height:         obj.Length,
+		Width:          g.Length,
+		Height:         g.Length,
 		WhiteSpaceOnly: true,
 	}
 }
 
-func (obj *Glue) Draw(page *graphics.Writer, xPos, yPos float64) {}
+func (g *Glue) Draw(page *graphics.Writer, xPos, yPos float64) {}
 
-func (obj *Glue) GetStretch() glueAmount {
-	return obj.Stretch
+func (g *Glue) GetStretch() glueAmount {
+	return g.Stretch
 }
 
-func (obj *Glue) GetShrink() glueAmount {
-	return obj.Shrink
+func (g *Glue) GetShrink() glueAmount {
+	return g.Shrink
 }
 
-func (obj *Glue) Add(other *Glue) {
+func (g *Glue) Add(other *Glue) {
 	if other == nil {
 		return
 	}
-	obj.Length += other.Length
-	obj.Stretch.IncrementBy(other.Stretch)
-	obj.Shrink.IncrementBy(other.Shrink)
+	g.Length += other.Length
+	g.Stretch.IncrementBy(other.Stretch)
+	g.Shrink.IncrementBy(other.Shrink)
 }
 
-func (obj *Glue) addBoxHeightAndDepth(box Box) {
+func (g *Glue) addBoxHeightAndDepth(box Box) {
 	ext := box.Extent()
-	obj.Length += ext.Height + ext.Depth
+	g.Length += ext.Height + ext.Depth
 	if stretch, ok := box.(stretcher); ok {
-		obj.Stretch.IncrementBy(stretch.GetStretch())
+		g.Stretch.IncrementBy(stretch.GetStretch())
 	}
 	if shrink, ok := box.(shrinker); ok {
-		obj.Shrink.IncrementBy(shrink.GetShrink())
+		g.Shrink.IncrementBy(shrink.GetShrink())
 	}
 }
 

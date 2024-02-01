@@ -124,9 +124,7 @@ func makeLine(width float64, boxes []Box) Box {
 
 		if gap != 0 {
 			if prevText != nil {
-				geom := prevText.F.Font.GetGeometry()
-				gap16 := geom.FromPDF16(prevText.F.Size, gap)
-				prevText.Glyphs[len(prevText.Glyphs)-1].Advance += gap16
+				prevText.Glyphs.Seq[len(prevText.Glyphs.Seq)-1].Advance += gap
 			} else {
 				fixedBoxes = append(fixedBoxes, Kern(gap))
 				prevText = nil
@@ -137,7 +135,7 @@ func makeLine(width float64, boxes []Box) Box {
 		switch b := box.(type) {
 		case *TextBox:
 			if prevText != nil && prevText.F == b.F {
-				prevText.Glyphs = append(prevText.Glyphs, b.Glyphs...)
+				prevText.Glyphs.Append(b.Glyphs)
 			} else {
 				fixedBoxes = append(fixedBoxes, b)
 				prevText = b

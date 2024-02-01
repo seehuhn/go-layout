@@ -22,14 +22,13 @@ import (
 	"seehuhn.de/go/pdf/color"
 	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/graphics"
-	"seehuhn.de/go/sfnt/glyph"
 )
 
 // TextBox represents a typeset string of characters as a Box object.
 // The text is typeset using a single font and size.
 type TextBox struct {
 	F      *FontInfo
-	Glyphs glyph.Seq
+	Glyphs *font.GlyphSeq
 }
 
 type FontInfo struct {
@@ -42,7 +41,7 @@ type FontInfo struct {
 func Text(F *FontInfo, text string) *TextBox {
 	return &TextBox{
 		F:      F,
-		Glyphs: F.Font.Layout(text),
+		Glyphs: F.Font.Layout(F.Size, text),
 	}
 }
 
@@ -55,8 +54,8 @@ func (obj *TextBox) Extent() *BoxExtent {
 	width := 0.0
 	height := math.Inf(-1)
 	depth := math.Inf(-1)
-	for _, glyph := range obj.Glyphs {
-		width += glyph.Advance.AsFloat(q)
+	for _, glyph := range obj.Glyphs.Seq {
+		width += glyph.Advance
 
 		thisDepth := geom.Descent * obj.F.Size
 		thisHeight := geom.Ascent * obj.F.Size
@@ -65,8 +64,8 @@ func (obj *TextBox) Extent() *BoxExtent {
 			if bbox.IsZero() {
 				continue
 			}
-			thisDepth = -(bbox.LLy + glyph.YOffset).AsFloat(q)
-			thisHeight = (bbox.URy + glyph.YOffset).AsFloat(q)
+			thisDepth = -(bbox.LLy.AsFloat(q) + glyph.Rise)
+			thisHeight = (bbox.URy.AsFloat(q) + glyph.Rise)
 		}
 		if thisDepth > depth {
 			depth = thisDepth
@@ -95,6 +94,6 @@ func (obj *TextBox) Draw(page *graphics.Writer, xPos, yPos float64) {
 		page.SetFillColor(color.Default)
 	}
 	page.TextFirstLine(xPos, yPos)
-	page.TextShowGlyphsOld(obj.Glyphs)
+	page.TextShowGlyphs(obj.Glyphs)
 	page.TextEnd()
 }
