@@ -45,7 +45,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		breakColor = color.RGB(0.9, 0, 0)
 	)
 
-	F, err := type1.TimesRoman.Embed(tree.Out, "Q")
+	F, err := type1.TimesRoman.Embed(tree.Out, &font.Options{ResName: "Q"})
 	if err != nil {
 		return err
 	}

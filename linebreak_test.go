@@ -22,7 +22,8 @@ import (
 
 	"golang.org/x/text/language"
 	"seehuhn.de/go/pdf/document"
-	"seehuhn.de/go/pdf/font/simple"
+	"seehuhn.de/go/pdf/font"
+	"seehuhn.de/go/pdf/font/embed"
 )
 
 func TestLineBreaks(t *testing.T) {
@@ -35,7 +36,11 @@ func TestLineBreaks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	F1, err := simple.EmbedOpenType(doc.Out, "../otf/SourceSerif4-Regular.otf", "F1", language.BritishEnglish)
+	opt := &font.Options{
+		Language: language.BritishEnglish,
+		ResName:  "F1",
+	}
+	F1, err := embed.OpenTypeFile(doc.Out, "../otf/SourceSerif4-Regular.otf", opt)
 	if err != nil {
 		t.Fatal(err)
 	}
