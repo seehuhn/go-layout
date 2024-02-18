@@ -85,9 +85,9 @@ func (obj *TextBox) Draw(page *graphics.Writer, xPos, yPos float64) {
 	page.TextStart()
 	page.TextSetFont(font, obj.F.Size)
 	if obj.F.Color != nil {
-		page.SetFillColor(obj.F.Color)
+		page.SetFillColorOld(obj.F.Color)
 	} else {
-		page.SetFillColor(color.Default)
+		page.SetFillColorOld(color.Default)
 	}
 	page.TextFirstLine(xPos, yPos)
 	page.TextShowGlyphs(obj.Glyphs)

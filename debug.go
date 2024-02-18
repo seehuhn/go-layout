@@ -115,7 +115,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		// draw the box contents
 		if !ext.WhiteSpaceOnly {
 			page.PushGraphicsState()
-			page.SetFillColor(color.Gray(0.9))
+			page.SetFillColorOld(color.Gray(0.9))
 			page.Rectangle(leftMargin-1, yDescent-1, ext.Width+2, yAscent-yDescent+2)
 			page.Fill()
 			page.PopGraphicsState()
@@ -158,7 +158,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 
 		// draw the geometry annotations
 		page.PushGraphicsState()
-		page.SetStrokeColor(geomColor)
+		page.SetStrokeColorOld(geomColor)
 		page.SetLineCap(graphics.LineCapRound)
 		page.SetLineWidth(0.5)
 		x := leftMargin + width + 10.0
@@ -200,7 +200,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		}
 		if !ext.WhiteSpaceOnly || label != "0" {
 			page.TextStart()
-			page.SetFillColor(geomColor)
+			page.SetFillColorOld(geomColor)
 			page.TextSetFont(F, 7)
 			page.TextFirstLine(leftMargin+width+15, yMid-2)
 			page.TextShow(label)
@@ -211,7 +211,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		newTarget := target - ext.Height - ext.Depth
 		if target > 0 && newTarget <= 0 {
 			y := yAscent - target
-			page.SetFillColor(geomColor)
+			page.SetFillColorOld(geomColor)
 			page.MoveTo(leftMargin-8, y)
 			page.LineTo(leftMargin-18, y+4)
 			page.LineTo(leftMargin-18, y-4)
@@ -223,7 +223,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 
 	// mark the line break candidates
 	page.PushGraphicsState()
-	page.SetFillColor(breakColor)
+	page.SetFillColorOld(breakColor)
 	x := leftMargin + 0.5*width
 	bestPos := -1
 	bestCost := math.Inf(+1)
@@ -257,7 +257,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 
 	if topSkip > 0 {
 		page.TextStart()
-		page.SetFillColor(breakColor)
+		page.SetFillColorOld(breakColor)
 		page.TextSetFont(F, 7)
 		page.TextFirstLine(leftMargin+width+15, yTop+5)
 		page.TextShow(fmt.Sprintf("%s (topskip)", format(topSkip)))
@@ -282,7 +282,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		}
 
 		page.TextStart()
-		page.SetFillColor(breakColor)
+		page.SetFillColorOld(breakColor)
 		page.TextSetFont(F, 7)
 		page.TextFirstLine(leftMargin+width-30, yTop-vPos[i+1]-2)
 		page.TextShow(fmt.Sprintf("%s plus %s minus %s",
@@ -292,7 +292,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	y := yTop - vPos[bestPos] - 12
 	if b := e.BottomGlue; b != nil {
 		page.TextStart()
-		page.SetFillColor(breakColor)
+		page.SetFillColorOld(breakColor)
 		page.TextSetFont(F, 7)
 		page.TextFirstLine(leftMargin+width+15, y)
 		page.TextShow(fmt.Sprintf("%s plus %s minus %s (bottomglue)",
@@ -302,7 +302,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		y -= 10
 
 		page.TextStart()
-		page.SetFillColor(breakColor)
+		page.SetFillColorOld(breakColor)
 		page.TextSetFont(F, 7)
 		page.TextFirstLine(leftMargin+width-30, y)
 		page.TextShow(fmt.Sprintf("%s plus %s minus %s",
@@ -318,7 +318,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 
 	// draw the final page outlines
 	page.PushGraphicsState()
-	page.SetStrokeColor(breakColor)
+	page.SetStrokeColorOld(breakColor)
 	page.SetLineWidth(2)
 	page.MoveTo(leftMargin+30, yTop-vPos[bestPos]-2)
 	page.LineTo(leftMargin-5, yTop-vPos[bestPos]-2)
@@ -474,7 +474,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 
 	// Show the text width
 	page.PushGraphicsState()
-	page.SetStrokeColor(breakColor)
+	page.SetStrokeColorOld(breakColor)
 	page.SetLineWidth(0.5)
 	page.MoveTo(leftMargin, 0)
 	page.LineTo(leftMargin, bottomMargin+visualHeight+topMargin)
@@ -523,14 +523,14 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 		page.EndPath()
 		overflow.Draw(page, xEnd, y)
 		page.SetExtGState(gs)
-		page.SetFillColor(color.RGB(1, 1, 1))
+		page.SetFillColorOld(color.RGB(1, 1, 1))
 		page.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
 		page.Fill()
 		page.PopGraphicsState()
 
 		// draw a little triangle for each potential breakpoint
 		page.PushGraphicsState()
-		page.SetFillColor(breakColor)
+		page.SetFillColorOld(breakColor)
 		for j, x := range xx {
 			if !isValidBreakpoint(hList, startPos[i]+j) {
 				continue
@@ -545,17 +545,17 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 		// add the annotations
 		page.PushGraphicsState()
 		page.SetLineWidth(3.5)
-		page.SetStrokeColor(color.Gray(0.9))
+		page.SetStrokeColorOld(color.Gray(0.9))
 		page.MoveTo(leftMargin+e.TextWidth+72+1.5, 0)
 		page.LineTo(leftMargin+e.TextWidth+72+1.5, bottomMargin+visualHeight+topMargin)
 		page.Stroke()
 		page.SetLineWidth(1.5)
-		page.SetStrokeColor(color.Gray(0.8))
+		page.SetStrokeColorOld(color.Gray(0.8))
 		page.MoveTo(leftMargin+e.TextWidth+72+0.5, 0)
 		page.LineTo(leftMargin+e.TextWidth+72+0.5, bottomMargin+visualHeight+topMargin)
 		page.Stroke()
 		page.SetLineWidth(0.5)
-		page.SetStrokeColor(color.Gray(0.6))
+		page.SetStrokeColorOld(color.Gray(0.6))
 		page.MoveTo(leftMargin+e.TextWidth+72, 0)
 		page.LineTo(leftMargin+e.TextWidth+72, bottomMargin+visualHeight+topMargin)
 		page.Stroke()
@@ -563,7 +563,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 
 		page.TextStart()
 		page.TextSetFont(F, 6)
-		page.SetFillColor(annotationColor)
+		page.SetFillColorOld(annotationColor)
 		page.TextFirstLine(leftMargin+e.TextWidth+72+10, y+4)
 		total := totalWidthAndGlue(lineContents[i])
 		page.TextShow(fmt.Sprintf("%+.1f", e.TextWidth-total.Length))
