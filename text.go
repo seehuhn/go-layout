@@ -19,7 +19,6 @@ package layout
 import (
 	"math"
 
-	"seehuhn.de/go/pdf/color"
 	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/graphics"
 )
@@ -34,7 +33,7 @@ type TextBox struct {
 type FontInfo struct {
 	Font  font.Layouter
 	Size  float64
-	Color color.Color
+	Color graphics.Color
 }
 
 // Text returns a new [TextBox] object.
@@ -85,9 +84,9 @@ func (obj *TextBox) Draw(page *graphics.Writer, xPos, yPos float64) {
 	page.TextStart()
 	page.TextSetFont(font, obj.F.Size)
 	if obj.F.Color != nil {
-		page.SetFillColorOld(obj.F.Color)
+		page.SetFillColor(obj.F.Color)
 	} else {
-		page.SetFillColorOld(color.Default)
+		page.SetFillColor(graphics.DeviceGrayNew(0))
 	}
 	page.TextFirstLine(xPos, yPos)
 	page.TextShowGlyphs(obj.Glyphs)
