@@ -25,6 +25,7 @@ import (
 	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/font/type1"
 	"seehuhn.de/go/pdf/graphics"
+	"seehuhn.de/go/pdf/graphics/color"
 	"seehuhn.de/go/pdf/pagetree"
 )
 
@@ -40,8 +41,8 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		rigthMargin  = 120
 	)
 	var (
-		geomColor  = graphics.DeviceRGBNew(0, 0, 0.9)
-		breakColor = graphics.DeviceRGBNew(0.9, 0, 0)
+		geomColor  = color.DeviceRGB.New(0, 0, 0.9)
+		breakColor = color.DeviceRGB.New(0.9, 0, 0)
 	)
 
 	F, err := type1.TimesRoman.Embed(tree.Out, &font.Options{ResName: "Q"})
@@ -114,7 +115,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		// draw the box contents
 		if !ext.WhiteSpaceOnly {
 			page.PushGraphicsState()
-			page.SetFillColor(graphics.DeviceGrayNew(0.9))
+			page.SetFillColor(color.DeviceGray.New(0.9))
 			page.Rectangle(leftMargin-1, yDescent-1, ext.Width+2, yAscent-yDescent+2)
 			page.Fill()
 			page.PopGraphicsState()
@@ -368,9 +369,9 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 		rigthMargin  = 240
 	)
 	var (
-		// geomColor  = graphics.DeviceRGBNew(0, 0, 0.9)
-		breakColor      = graphics.DeviceRGBNew(0.9, 0, 0)
-		annotationColor = graphics.DeviceRGBNew(0, 0.7, 0)
+		// geomColor  = color.DeviceRGB.New(0, 0, 0.9)
+		breakColor      = color.DeviceRGB.New(0.9, 0, 0)
+		annotationColor = color.DeviceRGB.New(0, 0.7, 0)
 	)
 
 	hList := e.hList
@@ -522,7 +523,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 		page.EndPath()
 		overflow.Draw(page, xEnd, y)
 		page.SetExtGState(gs)
-		page.SetFillColor(graphics.DeviceRGBNew(1, 1, 1))
+		page.SetFillColor(color.DeviceRGB.New(1, 1, 1))
 		page.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
 		page.Fill()
 		page.PopGraphicsState()
@@ -544,17 +545,17 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 		// add the annotations
 		page.PushGraphicsState()
 		page.SetLineWidth(3.5)
-		page.SetStrokeColor(graphics.DeviceGrayNew(0.9))
+		page.SetStrokeColor(color.DeviceGray.New(0.9))
 		page.MoveTo(leftMargin+e.TextWidth+72+1.5, 0)
 		page.LineTo(leftMargin+e.TextWidth+72+1.5, bottomMargin+visualHeight+topMargin)
 		page.Stroke()
 		page.SetLineWidth(1.5)
-		page.SetStrokeColor(graphics.DeviceGrayNew(0.8))
+		page.SetStrokeColor(color.DeviceGray.New(0.8))
 		page.MoveTo(leftMargin+e.TextWidth+72+0.5, 0)
 		page.LineTo(leftMargin+e.TextWidth+72+0.5, bottomMargin+visualHeight+topMargin)
 		page.Stroke()
 		page.SetLineWidth(0.5)
-		page.SetStrokeColor(graphics.DeviceGrayNew(0.6))
+		page.SetStrokeColor(color.DeviceGray.New(0.6))
 		page.MoveTo(leftMargin+e.TextWidth+72, 0)
 		page.LineTo(leftMargin+e.TextWidth+72, bottomMargin+visualHeight+topMargin)
 		page.Stroke()

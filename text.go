@@ -21,6 +21,7 @@ import (
 
 	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/graphics"
+	"seehuhn.de/go/pdf/graphics/color"
 )
 
 // TextBox represents a typeset string of characters as a Box object.
@@ -33,7 +34,7 @@ type TextBox struct {
 type FontInfo struct {
 	Font  font.Layouter
 	Size  float64
-	Color graphics.Color
+	Color color.Color
 }
 
 // Text returns a new [TextBox] object.
@@ -86,7 +87,7 @@ func (obj *TextBox) Draw(page *graphics.Writer, xPos, yPos float64) {
 	if obj.F.Color != nil {
 		page.SetFillColor(obj.F.Color)
 	} else {
-		page.SetFillColor(graphics.DeviceGrayNew(0))
+		page.SetFillColor(color.DeviceGray.New(0))
 	}
 	page.TextFirstLine(xPos, yPos)
 	page.TextShowGlyphs(obj.Glyphs)
