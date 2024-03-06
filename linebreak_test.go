@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"golang.org/x/text/language"
+	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/document"
 	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/font/embed"
@@ -31,7 +32,7 @@ func TestLineBreaks(t *testing.T) {
 	hSize := math.Round(15 / 2.54 * 72)
 	const fontSize = 10
 
-	doc, err := document.CreateSinglePage("test_LineBreaks.pdf", paper, nil)
+	doc, err := document.CreateSinglePage("test_LineBreaks.pdf", paper, pdf.V1_7, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
