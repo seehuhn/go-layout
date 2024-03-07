@@ -41,7 +41,7 @@ type FontInfo struct {
 func Text(F *FontInfo, text string) *TextBox {
 	return &TextBox{
 		F:      F,
-		Glyphs: F.Font.Layout(F.Size, text),
+		Glyphs: F.Font.Layout(nil, F.Size, text),
 	}
 }
 

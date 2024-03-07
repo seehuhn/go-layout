@@ -95,7 +95,7 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 
 	var spaceGID glyph.ID
 	var pdfSpaceWidth float64
-	seq := F.Font.Layout(F.Size, " ")
+	seq := F.Font.Layout(nil, F.Size, " ")
 	if len(seq.Seq) == 1 {
 		spaceGID = seq.Seq[0].GID
 		pdfSpaceWidth = seq.Seq[0].Advance
@@ -153,7 +153,7 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 	}
 
 	flushRunes := func() {
-		gg := F.Font.Layout(F.Size, string(run))
+		gg := F.Font.Layout(nil, F.Size, string(run))
 		box := &TextBox{F: F, Glyphs: gg}
 		e.hList = append(e.hList, &hModeBox{
 			Box:   box,
