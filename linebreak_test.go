@@ -24,7 +24,7 @@ import (
 	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/document"
 	"seehuhn.de/go/pdf/font"
-	"seehuhn.de/go/pdf/font/embed"
+	"seehuhn.de/go/pdf/font/gofont"
 )
 
 func TestLineBreaks(t *testing.T) {
@@ -41,7 +41,7 @@ func TestLineBreaks(t *testing.T) {
 		Language: language.BritishEnglish,
 		ResName:  "F1",
 	}
-	F1, err := embed.OpenTypeFile(doc.Out, "../otf/SourceSerif4-Regular.otf", opt)
+	F1, err := gofont.GoRegular.Embed(doc.Out, opt)
 	if err != nil {
 		t.Fatal(err)
 	}
