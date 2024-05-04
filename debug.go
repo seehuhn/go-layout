@@ -124,7 +124,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		}
 
 		// show the box types
-		page.TextStart()
+		page.TextBegin()
 		page.TextSetFont(F, 7)
 		if ext.WhiteSpaceOnly {
 			page.TextFirstLine(leftMargin+2, yMid-2)
@@ -199,7 +199,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 			label = label + fmt.Sprintf(" minus %s", formatS(shr.GetShrink()))
 		}
 		if !ext.WhiteSpaceOnly || label != "0" {
-			page.TextStart()
+			page.TextBegin()
 			page.SetFillColor(geomColor)
 			page.TextSetFont(F, 7)
 			page.TextFirstLine(leftMargin+width+15, yMid-2)
@@ -235,7 +235,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		}
 
 		y := yTop - vPos[c.pos]
-		page.TextStart()
+		page.TextBegin()
 		page.TextSetFont(F, 7)
 		page.TextFirstLine(x, y-3)
 		page.TextShowAligned(fmt.Sprintf("— b=%s, p=%s —", format(c.badness), format(float64(c.penalty))), 0, 0.5)
@@ -256,7 +256,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	total.Length += topSkip
 
 	if topSkip > 0 {
-		page.TextStart()
+		page.TextBegin()
 		page.SetFillColor(breakColor)
 		page.TextSetFont(F, 7)
 		page.TextFirstLine(leftMargin+width+15, yTop+5)
@@ -281,7 +281,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 			total.Shrink.IncrementBy(shrink.GetShrink())
 		}
 
-		page.TextStart()
+		page.TextBegin()
 		page.SetFillColor(breakColor)
 		page.TextSetFont(F, 7)
 		page.TextFirstLine(leftMargin+width-30, yTop-vPos[i+1]-2)
@@ -291,7 +291,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	}
 	y := yTop - vPos[bestPos] - 12
 	if b := e.BottomGlue; b != nil {
-		page.TextStart()
+		page.TextBegin()
 		page.SetFillColor(breakColor)
 		page.TextSetFont(F, 7)
 		page.TextFirstLine(leftMargin+width+15, y)
@@ -301,7 +301,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		total.Add(b)
 		y -= 10
 
-		page.TextStart()
+		page.TextBegin()
 		page.SetFillColor(breakColor)
 		page.TextSetFont(F, 7)
 		page.TextFirstLine(leftMargin+width-30, y)
@@ -561,7 +561,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 		page.Stroke()
 		page.PopGraphicsState()
 
-		page.TextStart()
+		page.TextBegin()
 		page.TextSetFont(F, 6)
 		page.SetFillColor(annotationColor)
 		page.TextFirstLine(leftMargin+e.TextWidth+72+10, y+4)

@@ -82,7 +82,7 @@ func (obj *TextBox) Extent() *BoxExtent {
 func (obj *TextBox) Draw(page *graphics.Writer, xPos, yPos float64) {
 	font := obj.F.Font
 
-	page.TextStart()
+	page.TextBegin()
 	page.TextSetFont(font, obj.F.Size)
 	if obj.F.Color != nil {
 		page.SetFillColor(obj.F.Color)
