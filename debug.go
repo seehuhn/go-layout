@@ -38,7 +38,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		bottomMargin = 36
 		leftMargin   = 48
 		topMargin    = 36
-		rigthMargin  = 120
+		rightMargin  = 120
 	)
 	var (
 		geomColor  = color.DeviceRGB.New(0, 0, 0.9)
@@ -343,7 +343,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		"MediaBox": &pdf.Rectangle{
 			LLx: 0,
 			LLy: 0,
-			URx: leftMargin + width + rigthMargin,
+			URx: leftMargin + width + rightMargin,
 			URy: topMargin + visualHeight + bottomMargin,
 		},
 	}
@@ -366,7 +366,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 		bottomMargin = 36
 		leftMargin   = 48
 		topMargin    = 36
-		rigthMargin  = 240
+		rightMargin  = 240
 	)
 	var (
 		// geomColor  = color.DeviceRGB.New(0, 0, 0.9)
@@ -607,7 +607,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 		"MediaBox": &pdf.Rectangle{
 			LLx: 0,
 			LLy: 0,
-			URx: leftMargin + e.TextWidth + rigthMargin,
+			URx: leftMargin + e.TextWidth + rightMargin,
 			URy: topMargin + visualHeight + bottomMargin,
 		},
 	}
