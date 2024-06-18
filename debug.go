@@ -45,7 +45,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 		breakColor = color.DeviceRGB.New(0.9, 0, 0)
 	)
 
-	F, err := type1.TimesRoman.Embed(tree.Out, &font.Options{ResName: "Q"})
+	F, err := type1.TimesRoman.Embed(tree.Out, nil)
 	if err != nil {
 		return err
 	}
@@ -460,7 +460,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 	state := graphics.State{}
 	state.FillAlpha = 0.75
 	state.Set = graphics.StateFillAlpha
-	gs, err := graphics.NewExtGState(state, "gs:t")
+	gs, err := graphics.NewExtGState(state)
 	if err != nil {
 		return err
 	}

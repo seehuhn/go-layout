@@ -39,7 +39,6 @@ func TestLineBreaks(t *testing.T) {
 
 	opt := &font.Options{
 		Language: language.BritishEnglish,
-		ResName:  "F1",
 	}
 	F1, err := gofont.GoRegular.Embed(doc.Out, opt)
 	if err != nil {
