@@ -33,6 +33,7 @@ func (e *Engine) MakeVTop() Box {
 func (e *Engine) AppendPages(tree *pagetree.Writer, final bool) error {
 	// TODO(voss): move this to the caller
 	rm := graphics.NewResourceManager(tree.Out)
+	defer rm.Close()
 
 	for len(e.vList) > 0 {
 		if !final && (e.vTotalHeight() < 2*e.TextHeight || len(e.vList) < 2) {
