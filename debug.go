@@ -30,7 +30,7 @@ import (
 )
 
 // DebugPageBreak creates a PDF page which explains the page break decisions.
-func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
+func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *graphics.ResourceManager) error {
 	const (
 		overshot     = 1.4
 		glueHeight   = 12
@@ -88,7 +88,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 	if err != nil {
 		return err
 	}
-	page := graphics.NewWriter(stream, pdf.GetVersion(tree.Out))
+	page := graphics.NewWriter(stream, rm)
 
 	yTop := bottomMargin + visualHeight
 	target := height
@@ -359,7 +359,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer) error {
 }
 
 // DebugLineBreaks creates a PDF page which explains the line break decisions.
-func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
+func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *graphics.ResourceManager, F font.Embedded) error {
 	// This must match the code in [Engine.EndParagraph]
 
 	const (
@@ -455,7 +455,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, F font.Embedded) error {
 	if err != nil {
 		return err
 	}
-	page := graphics.NewWriter(stream, pdf.GetVersion(tree.Out))
+	page := graphics.NewWriter(stream, rm)
 
 	state := graphics.State{}
 	state.FillAlpha = 0.75

@@ -31,6 +31,9 @@ func (e *Engine) MakeVTop() Box {
 }
 
 func (e *Engine) AppendPages(tree *pagetree.Writer, final bool) error {
+	// TODO(voss): move this to the caller
+	rm := graphics.NewResourceManager(tree.Out)
+
 	for len(e.vList) > 0 {
 		if !final && (e.vTotalHeight() < 2*e.TextHeight || len(e.vList) < 2) {
 			break
@@ -38,7 +41,7 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, final bool) error {
 
 		e.PageNumber++
 		if e.PageNumber == e.DebugPageNumber {
-			err := e.DebugPageBreak(tree)
+			err := e.DebugPageBreak(tree, rm)
 			if err != nil {
 				return err
 			}
@@ -55,7 +58,7 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, final bool) error {
 		if err != nil {
 			return err
 		}
-		page := graphics.NewWriter(stream, pdf.GetVersion(tree.Out))
+		page := graphics.NewWriter(stream, rm)
 
 		if e.BeforePageFunc != nil {
 			err = e.BeforePageFunc(e.PageNumber, page)
