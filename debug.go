@@ -30,7 +30,7 @@ import (
 )
 
 // DebugPageBreak creates a PDF page which explains the page break decisions.
-func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *graphics.ResourceManager) error {
+func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) error {
 	const (
 		overshot     = 1.4
 		glueHeight   = 12
@@ -359,7 +359,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *graphics.ResourceMana
 }
 
 // DebugLineBreaks creates a PDF page which explains the line break decisions.
-func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *graphics.ResourceManager, F font.Embedded) error {
+func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager, F font.Embedded) error {
 	// This must match the code in [Engine.EndParagraph]
 
 	const (

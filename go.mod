@@ -4,7 +4,7 @@ go 1.22.2
 
 require (
 	golang.org/x/text v0.16.0
-	seehuhn.de/go/pdf v0.5.1-0.20240713071411-870b56b866d4
+	seehuhn.de/go/pdf v0.5.1-0.20240714221602-f33762ed7228
 	seehuhn.de/go/sfnt v0.5.0
 )
 
