@@ -40,7 +40,8 @@ func TestLineBreaks(t *testing.T) {
 	opt := &font.Options{
 		Language: language.BritishEnglish,
 	}
-	F1, err := gofont.GoRegular.Embed(doc.Out, opt)
+	F1X := gofont.Regular.New(opt)
+	F1, err := F1X.Embed(doc.Out, opt)
 	if err != nil {
 		t.Fatal(err)
 	}
