@@ -45,11 +45,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 		breakColor = color.DeviceRGB.New(0.9, 0, 0)
 	)
 
-	FX, err := standard.TimesRoman.New(nil)
-	if err != nil {
-		return err
-	}
-	F, err := FX.Embed(tree.Out)
+	F, err := standard.TimesRoman.New(nil)
 	if err != nil {
 		return err
 	}
@@ -363,7 +359,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 }
 
 // DebugLineBreaks creates a PDF page which explains the line break decisions.
-func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager, F font.Embedded) error {
+func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager, F font.Font) error {
 	// This must match the code in [Engine.EndParagraph]
 
 	const (

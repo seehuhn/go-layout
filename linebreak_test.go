@@ -40,12 +40,11 @@ func TestLineBreaks(t *testing.T) {
 	opt := &font.Options{
 		Language: language.BritishEnglish,
 	}
-	F1X := gofont.Regular.New(opt)
-	F1, err := F1X.Embed(doc.Out)
+	F, err := gofont.Regular.New(opt)
 	if err != nil {
 		t.Fatal(err)
 	}
-	geom := F1.GetGeometry()
+	geom := F.GetGeometry()
 
 	e := &Engine{
 		TextWidth:    hSize,
@@ -54,7 +53,7 @@ func TestLineBreaks(t *testing.T) {
 		BaseLineSkip: fontSize * geom.BaseLineDistance,
 	}
 
-	e.HAddText(&FontInfo{Font: F1, Size: 10}, testText)
+	e.HAddText(&FontInfo{Font: F, Size: 10}, testText)
 	e.EndParagraph()
 
 	paragraph := VTop(e.vList...)
