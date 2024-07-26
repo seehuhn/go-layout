@@ -457,12 +457,9 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 	}
 	page := graphics.NewWriter(stream, rm)
 
-	state := graphics.State{}
-	state.FillAlpha = 0.75
-	state.Set = graphics.StateFillAlpha
-	gs, err := graphics.NewExtGState(state)
-	if err != nil {
-		return err
+	gs := &graphics.ExtGState{
+		FillAlpha: 0.75,
+		Set:       graphics.StateFillAlpha,
 	}
 
 	visualHeight := 0.0
