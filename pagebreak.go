@@ -30,11 +30,7 @@ func (e *Engine) MakeVTop() Box {
 	return vtop
 }
 
-func (e *Engine) AppendPages(tree *pagetree.Writer, final bool) error {
-	// TODO(voss): move this to the caller
-	rm := pdf.NewResourceManager(tree.Out)
-	defer rm.Close()
-
+func (e *Engine) AppendPages(tree *pagetree.Writer, rm *pdf.ResourceManager, final bool) error {
 	for len(e.vList) > 0 {
 		if !final && (e.vTotalHeight() < 2*e.TextHeight || len(e.vList) < 2) {
 			break
