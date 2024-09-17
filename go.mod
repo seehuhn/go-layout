@@ -6,8 +6,8 @@ toolchain go1.23.0
 
 require (
 	golang.org/x/text v0.16.0
-	seehuhn.de/go/pdf v0.5.1-0.20240909012247-835e814bd77f
-	seehuhn.de/go/sfnt v0.5.1-0.20240909011524-1d1205bec1e0
+	seehuhn.de/go/pdf v0.5.1-0.20240917222002-741567561d2a
+	seehuhn.de/go/sfnt v0.5.1-0.20240917221416-7f741b7e724b
 )
 
 require (
