@@ -23,8 +23,8 @@ import (
 	"golang.org/x/text/language"
 	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/document"
-	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/font/gofont"
+	"seehuhn.de/go/pdf/font/truetype"
 )
 
 func TestLineBreaks(t *testing.T) {
@@ -37,7 +37,7 @@ func TestLineBreaks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	opt := &font.Options{
+	opt := &truetype.Options{
 		Language: language.BritishEnglish,
 	}
 	F, err := gofont.Regular.New(opt)

@@ -6,8 +6,8 @@ toolchain go1.23.4
 
 require (
 	golang.org/x/text v0.16.0
-	seehuhn.de/go/pdf v0.5.1-0.20250209133809-d63bdb414aa4
-	seehuhn.de/go/sfnt v0.5.1-0.20250205224553-93fbb21ecef7
+	seehuhn.de/go/pdf v0.5.1-0.20250226224717-3086db8ed134
+	seehuhn.de/go/sfnt v0.5.1-0.20250215135639-647467b84788
 )
 
 require (
@@ -18,6 +18,6 @@ require (
 	seehuhn.de/go/dijkstra v0.9.3 // indirect
 	seehuhn.de/go/geom v0.0.0-20250204091821-5a82ee1c4995 // indirect
 	seehuhn.de/go/icc v0.0.0-20240801195843-cfc244e2c55a // indirect
-	seehuhn.de/go/postscript v0.5.1-0.20250203215949-b2900da8e9ed // indirect
+	seehuhn.de/go/postscript v0.5.1-0.20250215164151-95cb7bb57ed7 // indirect
 	seehuhn.de/go/xmp v0.3.0 // indirect
 )
