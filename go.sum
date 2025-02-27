@@ -40,8 +40,8 @@ seehuhn.de/go/geom v0.0.0-20250204091821-5a82ee1c4995 h1:jqVoaCvsxF8BuY/MiiMRYp4
 seehuhn.de/go/geom v0.0.0-20250204091821-5a82ee1c4995/go.mod h1:zECeMkxCtCykTdJmzoIbjCQRf9OJurOXenhzHm0rW4o=
 seehuhn.de/go/icc v0.0.0-20240801195843-cfc244e2c55a h1:AonqL6dUBDUJu06ueS8G44KVwtiZvONQSXdlYn/jzy8=
 seehuhn.de/go/icc v0.0.0-20240801195843-cfc244e2c55a/go.mod h1:wOBOA24OpXamCfQt//QaJnvlLdQFSTAq4525fJRcem8=
-seehuhn.de/go/pdf v0.5.1-0.20250226224717-3086db8ed134 h1:GLISS1JLa1jNZXov0ZXxnHADQNL76x9iJuKLct0dg9c=
-seehuhn.de/go/pdf v0.5.1-0.20250226224717-3086db8ed134/go.mod h1:yK2LXNQ61LoOS/UIBbI7EMJZ7Da4qtC7+0VoGL+BknY=
+seehuhn.de/go/pdf v0.5.1-0.20250227143838-106b5dd2fd21 h1:S1bfBenaBg+xLP5sCbHvkZ7IVg5O0+g8jqlYiivJEIs=
+seehuhn.de/go/pdf v0.5.1-0.20250227143838-106b5dd2fd21/go.mod h1:yK2LXNQ61LoOS/UIBbI7EMJZ7Da4qtC7+0VoGL+BknY=
 seehuhn.de/go/postscript v0.5.1-0.20250215164151-95cb7bb57ed7 h1:8njaHBFOb/E9beWHA1GRsIb29X35Yf1vPIriNDq2qkQ=
 seehuhn.de/go/postscript v0.5.1-0.20250215164151-95cb7bb57ed7/go.mod h1:XN0ruSJq/ps1noj9IPTeUikM7FSAC5njX3xMmw3tjlo=
 seehuhn.de/go/sfnt v0.5.1-0.20250215135639-647467b84788 h1:pKqK+kPAxob+QE/XFUayZRU67rLj5YJ7+cAcrxsa0OY=

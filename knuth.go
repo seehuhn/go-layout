@@ -184,9 +184,9 @@ func (br *knuthPlassLineBreaker) computeDemerits(r float64, pb float64, a *knuth
 	var d float64
 	r3 := 1 + 100*pow3(math.Abs(r))
 	if pb >= 0 {
-		d = pow2(r3 + float64(pb))
+		d = pow2(r3 + pb)
 	} else if pb != PenaltyForceBreak {
-		d = pow2(r3) - pow2(float64(pb))
+		d = pow2(r3) - pow2(pb)
 	} else {
 		d = pow2(r3)
 	}

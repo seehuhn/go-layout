@@ -6,7 +6,7 @@ toolchain go1.23.4
 
 require (
 	golang.org/x/text v0.16.0
-	seehuhn.de/go/pdf v0.5.1-0.20250226224717-3086db8ed134
+	seehuhn.de/go/pdf v0.5.1-0.20250227143838-106b5dd2fd21
 	seehuhn.de/go/sfnt v0.5.1-0.20250215135639-647467b84788
 )
 
