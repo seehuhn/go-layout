@@ -60,8 +60,8 @@ func (obj *TextBox) Extent() *BoxExtent {
 		if bbox.IsZero() {
 			continue
 		}
-		thisDepth := -(bbox.LLy*obj.F.Size + glyph.Rise)
-		thisHeight := (bbox.URy*obj.F.Size + glyph.Rise)
+		thisDepth := -(bbox.LLy*obj.F.Size + glyph.Rise) / 1000
+		thisHeight := (bbox.URy*obj.F.Size + glyph.Rise) / 1000
 
 		if thisDepth > depth {
 			depth = thisDepth
