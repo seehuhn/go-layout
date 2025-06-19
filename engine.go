@@ -18,7 +18,6 @@ package layout
 
 import (
 	"math"
-	"slices"
 	"unicode"
 
 	"seehuhn.de/go/sfnt/glyph"
@@ -120,7 +119,7 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 			gg := []font.Glyph{
 				{
 					GID:     spaceGID,
-					Text:    slices.Clone(run),
+					Text:    string(run),
 					Advance: 0, // no width for space glyph, since we add glue below
 				},
 			}
