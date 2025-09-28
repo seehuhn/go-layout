@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	golang.org/x/text v0.26.0
-	seehuhn.de/go/pdf v0.6.1-0.20250928091554-8ed81816ef52
+	seehuhn.de/go/pdf v0.6.1-0.20250928161934-a9ace4d451cd
 	seehuhn.de/go/sfnt v0.6.1-0.20250805053320-86c13f5239b6
 )
 
