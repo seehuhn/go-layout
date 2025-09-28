@@ -356,7 +356,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 }
 
 // DebugLineBreaks creates a PDF page which explains the line break decisions.
-func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager, F font.Font) error {
+func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager, F font.Instance) error {
 	// This must match the code in [Engine.EndParagraph]
 
 	const (

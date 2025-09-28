@@ -37,10 +37,10 @@ func TestLineBreaks(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	opt := &truetype.Options{
+	opt := &truetype.OptionsSimple{
 		Language: language.BritishEnglish,
 	}
-	F, err := gofont.Regular.New(opt)
+	F, err := gofont.Regular.NewSimple(opt)
 	if err != nil {
 		t.Fatal(err)
 	}
