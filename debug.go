@@ -41,8 +41,8 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 		rightMargin  = 120
 	)
 	var (
-		geomColor  = color.DeviceRGB(0, 0, 0.9)
-		breakColor = color.DeviceRGB(0.9, 0, 0)
+		geomColor  = color.DeviceRGB{0, 0, 0.9}
+		breakColor = color.DeviceRGB{0.9, 0, 0}
 	)
 
 	F := standard.TimesRoman.New()
@@ -366,9 +366,9 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 		rightMargin  = 240
 	)
 	var (
-		// geomColor  = color.DeviceRGB(0, 0, 0.9)
-		breakColor      = color.DeviceRGB(0.9, 0, 0)
-		annotationColor = color.DeviceRGB(0, 0.7, 0)
+		// geomColor  = color.DeviceRGB{0, 0, 0.9}
+		breakColor      = color.DeviceRGB{0.9, 0, 0}
+		annotationColor = color.DeviceRGB{0, 0.7, 0}
 	)
 
 	hList := e.hList
@@ -517,7 +517,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 		page.EndPath()
 		overflow.Draw(page, xEnd, y)
 		page.SetExtGState(gs)
-		page.SetFillColor(color.DeviceRGB(1, 1, 1))
+		page.SetFillColor(color.DeviceRGB{1, 1, 1})
 		page.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
 		page.Fill()
 		page.PopGraphicsState()
