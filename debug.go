@@ -26,6 +26,8 @@ import (
 	"seehuhn.de/go/pdf/font/standard"
 	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/pdf/graphics/color"
+	"seehuhn.de/go/pdf/graphics/content"
+	"seehuhn.de/go/pdf/graphics/content/builder"
 	"seehuhn.de/go/pdf/graphics/state"
 	"seehuhn.de/go/pdf/pagetree"
 )
@@ -81,12 +83,8 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 	}
 	visualHeight := vPos[len(vPos)-1]
 
-	contentRef := tree.Out.Alloc()
-	stream, err := tree.Out.OpenStream(contentRef, nil, pdf.FilterCompress{})
-	if err != nil {
-		return err
-	}
-	page := graphics.NewWriter(stream, rm)
+	// Create a builder to accumulate drawing operations
+	page := builder.New(content.Page, nil)
 
 	yTop := bottomMargin + visualHeight
 	target := height
@@ -330,11 +328,20 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 	page.Stroke()
 	page.PopGraphicsState()
 
-	// add the page to the page tree
-	err = stream.Close()
+	// Write the content stream
+	contentRef := tree.Out.Alloc()
+	stream, err := tree.Out.OpenStream(contentRef, nil, pdf.FilterCompress{})
 	if err != nil {
 		return err
 	}
+	if err := content.Write(stream, page.Stream, tree.Out.GetMeta().Version, content.Page, page.Resources); err != nil {
+		return err
+	}
+	if err := stream.Close(); err != nil {
+		return err
+	}
+
+	// Build page dictionary
 	dict := pdf.Dict{
 		"Type":     pdf.Name("Page"),
 		"Contents": contentRef,
@@ -345,8 +352,12 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 			URy: topMargin + visualHeight + bottomMargin,
 		},
 	}
-	if page.Resources != nil {
-		dict["Resources"] = pdf.AsDict(page.Resources)
+	resObj, err := rm.Embed(page.Resources)
+	if err != nil {
+		return err
+	}
+	if resObj != nil {
+		dict["Resources"] = resObj
 	}
 	err = tree.AppendPage(dict)
 	if err != nil {
@@ -448,12 +459,8 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 	// Now we have gathered all the lines.
 	// Create a page which shows the line breaks.
 
-	contentRef := tree.Out.Alloc()
-	stream, err := tree.Out.OpenStream(contentRef, nil, pdf.FilterCompress{})
-	if err != nil {
-		return err
-	}
-	page := graphics.NewWriter(stream, rm)
+	// Create a builder to accumulate drawing operations
+	page := builder.New(content.Page, nil)
 
 	gs := &graphics.ExtGState{
 		FillAlpha: 0.75,
@@ -592,10 +599,20 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 		y -= 10
 	}
 
-	err = stream.Close()
+	// Write the content stream
+	contentRef := tree.Out.Alloc()
+	stream, err := tree.Out.OpenStream(contentRef, nil, pdf.FilterCompress{})
 	if err != nil {
 		return err
 	}
+	if err := content.Write(stream, page.Stream, tree.Out.GetMeta().Version, content.Page, page.Resources); err != nil {
+		return err
+	}
+	if err := stream.Close(); err != nil {
+		return err
+	}
+
+	// Build page dictionary
 	dict := pdf.Dict{
 		"Type":     pdf.Name("Page"),
 		"Contents": contentRef,
@@ -606,11 +623,14 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 			URy: topMargin + visualHeight + bottomMargin,
 		},
 	}
-	if page.Resources != nil {
-		dict["Resources"] = pdf.AsDict(page.Resources)
-	}
-	err = tree.AppendPage(dict)
+	resObj, err := rm.Embed(page.Resources)
 	if err != nil {
+		return err
+	}
+	if resObj != nil {
+		dict["Resources"] = resObj
+	}
+	if err := tree.AppendPage(dict); err != nil {
 		return err
 	}
 

@@ -20,7 +20,8 @@ import (
 	"math"
 
 	"seehuhn.de/go/pdf"
-	"seehuhn.de/go/pdf/graphics"
+	"seehuhn.de/go/pdf/graphics/content"
+	"seehuhn.de/go/pdf/graphics/content/builder"
 	"seehuhn.de/go/pdf/pagetree"
 )
 
@@ -50,15 +51,11 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, rm *pdf.ResourceManager, fin
 			panic("unexpected records")
 		}
 
-		contentRef := tree.Out.Alloc()
-		stream, err := tree.Out.OpenStream(contentRef, nil, pdf.FilterCompress{})
-		if err != nil {
-			return err
-		}
-		page := graphics.NewWriter(stream, rm)
+		// Create a builder to accumulate drawing operations
+		page := builder.New(content.Page, nil)
 
 		if e.BeforePageFunc != nil {
-			err = e.BeforePageFunc(e.PageNumber, page)
+			err := e.BeforePageFunc(e.PageNumber, page)
 			if err != nil {
 				return err
 			}
@@ -67,23 +64,39 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, rm *pdf.ResourceManager, fin
 		vbox.Draw(page, 72, 72) // TODO(voss): make the margins configurable
 
 		if e.AfterPageFunc != nil {
-			err = e.AfterPageFunc(e.PageNumber, page)
+			err := e.AfterPageFunc(e.PageNumber, page)
 			if err != nil {
 				return err
 			}
 		}
 
+		// Write the content stream
+		contentRef := tree.Out.Alloc()
+		stream, err := tree.Out.OpenStream(contentRef, nil, pdf.FilterCompress{})
+		if err != nil {
+			return err
+		}
+		err = content.Write(stream, page.Stream, tree.Out.GetMeta().Version, content.Page, page.Resources)
+		if err != nil {
+			return err
+		}
 		err = stream.Close()
 		if err != nil {
 			return err
 		}
+
+		// Build page dictionary
 		pageDict := pdf.Dict{
 			"Type":     pdf.Name("Page"),
 			"Contents": contentRef,
 			"MediaBox": e.PageSize,
 		}
-		if page.Resources != nil {
-			pageDict["Resources"] = pdf.AsDict(page.Resources)
+		resObj, err := rm.Embed(page.Resources)
+		if err != nil {
+			return err
+		}
+		if resObj != nil {
+			pageDict["Resources"] = resObj
 		}
 
 		pageRef := tree.Out.Alloc()

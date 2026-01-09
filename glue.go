@@ -19,7 +19,7 @@ package layout
 import (
 	"math"
 
-	"seehuhn.de/go/pdf/graphics"
+	"seehuhn.de/go/pdf/graphics/content/builder"
 )
 
 // Skip returns a new "glue" box with the given natural length and
@@ -120,7 +120,7 @@ func (g *Glue) Extent() *BoxExtent {
 	}
 }
 
-func (g *Glue) Draw(page *graphics.Writer, xPos, yPos float64) {}
+func (g *Glue) Draw(page *builder.Builder, xPos, yPos float64) {}
 
 func (g *Glue) GetStretch() glueAmount {
 	return g.Stretch

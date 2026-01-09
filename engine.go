@@ -24,7 +24,7 @@ import (
 
 	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/font"
-	"seehuhn.de/go/pdf/graphics"
+	"seehuhn.de/go/pdf/graphics/content/builder"
 )
 
 // A list of horizontal mode items can contain the following types:
@@ -65,8 +65,8 @@ type Engine struct {
 	WidowPenalty     float64
 
 	PageNumber     int
-	BeforePageFunc func(int, *graphics.Writer) error
-	AfterPageFunc  func(int, *graphics.Writer) error
+	BeforePageFunc func(int, *builder.Builder) error
+	AfterPageFunc  func(int, *builder.Builder) error
 	AfterCloseFunc func(pageDict pdf.Dict) error
 
 	DebugPageNumber int
@@ -238,7 +238,7 @@ func (obj penalty) Extent() *BoxExtent {
 	return &BoxExtent{WhiteSpaceOnly: true}
 }
 
-func (obj penalty) Draw(page *graphics.Writer, xPos, yPos float64) {
+func (obj penalty) Draw(page *builder.Builder, xPos, yPos float64) {
 	// pass
 }
 

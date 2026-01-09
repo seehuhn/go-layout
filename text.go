@@ -20,8 +20,8 @@ import (
 	"math"
 
 	"seehuhn.de/go/pdf/font"
-	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/pdf/graphics/color"
+	"seehuhn.de/go/pdf/graphics/content/builder"
 )
 
 // TextBox represents a typeset string of characters as a Box object.
@@ -79,7 +79,7 @@ func (obj *TextBox) Extent() *BoxExtent {
 }
 
 // Draw implements the [Box] interface.
-func (obj *TextBox) Draw(page *graphics.Writer, xPos, yPos float64) {
+func (obj *TextBox) Draw(page *builder.Builder, xPos, yPos float64) {
 	font := obj.F.Font
 
 	page.TextBegin()
