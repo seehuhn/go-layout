@@ -26,6 +26,7 @@ import (
 	"seehuhn.de/go/pdf/font/standard"
 	"seehuhn.de/go/pdf/graphics"
 	"seehuhn.de/go/pdf/graphics/color"
+	"seehuhn.de/go/pdf/graphics/state"
 	"seehuhn.de/go/pdf/pagetree"
 )
 
@@ -456,7 +457,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 
 	gs := &graphics.ExtGState{
 		FillAlpha: 0.75,
-		Set:       graphics.StateFillAlpha,
+		Set:       state.FillAlpha,
 	}
 
 	visualHeight := 0.0
