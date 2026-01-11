@@ -28,6 +28,7 @@ import (
 	"seehuhn.de/go/pdf/graphics/color"
 	"seehuhn.de/go/pdf/graphics/content"
 	"seehuhn.de/go/pdf/graphics/content/builder"
+	"seehuhn.de/go/pdf/graphics/extgstate"
 	"seehuhn.de/go/pdf/graphics/state"
 	"seehuhn.de/go/pdf/pagetree"
 )
@@ -462,7 +463,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 	// Create a builder to accumulate drawing operations
 	page := builder.New(content.Page, nil)
 
-	gs := &graphics.ExtGState{
+	gs := &extgstate.ExtGState{
 		FillAlpha: 0.75,
 		Set:       state.FillAlpha,
 	}
