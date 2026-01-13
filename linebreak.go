@@ -20,6 +20,9 @@ import (
 	"fmt"
 )
 
+// EndParagraph finishes the current paragraph and adds the resulting lines
+// to the vertical mode list. This triggers the Knuth-Plass line breaking
+// algorithm to find optimal line breaks.
 func (e *Engine) EndParagraph() {
 	// This must match the code in [Engine.VisualiseLineBreaks]
 

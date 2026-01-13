@@ -22,15 +22,21 @@ import (
 	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/graphics/content"
 	"seehuhn.de/go/pdf/graphics/content/builder"
+	"seehuhn.de/go/pdf/page"
 	"seehuhn.de/go/pdf/pagetree"
 )
 
+// MakeVTop returns the current vertical mode list as a single VTop box
+// and clears the list.
 func (e *Engine) MakeVTop() Box {
 	vtop := VTop(e.vList...)
 	e.vList = e.vList[:0]
 	return vtop
 }
 
+// AppendPages breaks the vertical mode list into pages and appends them
+// to the page tree. If final is false, some material may be held back
+// to allow for better page breaks when more content is added.
 func (e *Engine) AppendPages(tree *pagetree.Writer, rm *pdf.ResourceManager, final bool) error {
 	for len(e.vList) > 0 {
 		if !final && (e.vTotalHeight() < 2*e.TextHeight || len(e.vList) < 2) {
@@ -52,51 +58,29 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, rm *pdf.ResourceManager, fin
 		}
 
 		// Create a builder to accumulate drawing operations
-		page := builder.New(content.Page, nil)
+		b := builder.New(content.Page, nil)
 
 		if e.BeforePageFunc != nil {
-			err := e.BeforePageFunc(e.PageNumber, page)
+			err := e.BeforePageFunc(e.PageNumber, b)
 			if err != nil {
 				return err
 			}
 		}
 
-		vbox.Draw(page, 72, 72) // TODO(voss): make the margins configurable
+		vbox.Draw(b, 72, 72) // TODO(voss): make the margins configurable
 
 		if e.AfterPageFunc != nil {
-			err := e.AfterPageFunc(e.PageNumber, page)
+			err := e.AfterPageFunc(e.PageNumber, b)
 			if err != nil {
 				return err
 			}
 		}
 
-		// Write the content stream
-		contentRef := tree.Out.Alloc()
-		stream, err := tree.Out.OpenStream(contentRef, nil, pdf.FilterCompress{})
-		if err != nil {
-			return err
-		}
-		err = content.Write(stream, page.Stream, tree.Out.GetMeta().Version, content.Page, page.Resources)
-		if err != nil {
-			return err
-		}
-		err = stream.Close()
-		if err != nil {
-			return err
-		}
-
-		// Build page dictionary
-		pageDict := pdf.Dict{
-			"Type":     pdf.Name("Page"),
-			"Contents": contentRef,
-			"MediaBox": e.PageSize,
-		}
-		resObj, err := rm.Embed(page.Resources)
-		if err != nil {
-			return err
-		}
-		if resObj != nil {
-			pageDict["Resources"] = resObj
+		// Create page object
+		p := &page.Page{
+			MediaBox:  e.PageSize,
+			Resources: b.Resources,
+			Contents:  []*page.Content{{Operators: b.Stream}},
 		}
 
 		pageRef := tree.Out.Alloc()
@@ -114,13 +98,13 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, rm *pdf.ResourceManager, fin
 		}
 
 		if e.AfterCloseFunc != nil {
-			err = e.AfterCloseFunc(pageDict)
+			err := e.AfterCloseFunc(p)
 			if err != nil {
 				return err
 			}
 		}
 
-		err = tree.AppendPageDict(pageRef, pageDict)
+		err := tree.AppendPageRef(pageRef, p)
 		if err != nil {
 			return err
 		}
@@ -189,7 +173,7 @@ func (e *Engine) vGetCandidates(height float64) []vCandidate {
 	total.Add(e.BottomGlue)
 
 	var res []vCandidate
-	prevDept := 0.0
+	prevDepth := 0.0
 	for i := 0; i <= len(e.vList); i++ {
 		var box Box
 		if i < len(e.vList) {
@@ -219,11 +203,11 @@ func (e *Engine) vGetCandidates(height float64) []vCandidate {
 			} else if total.Length < height {
 				// need to stretch
 				needStretch := height - total.Length
-				canStrech := total.Stretch.Val
+				canStretch := total.Stretch.Val
 				if total.Stretch.Order > 0 {
-					canStrech = height
+					canStretch = height
 				}
-				badness = 100 * math.Pow(needStretch/canStrech, 3)
+				badness = 100 * math.Pow(needStretch/canStretch, 3)
 			} else {
 				// need to shrink
 				needShrink := total.Length - height
@@ -245,8 +229,8 @@ func (e *Engine) vGetCandidates(height float64) []vCandidate {
 
 		if box != nil && !isPenalty {
 			ext := box.Extent()
-			total.Length += ext.Height + prevDept
-			prevDept = ext.Depth
+			total.Length += ext.Height + prevDepth
+			prevDepth = ext.Depth
 
 			if stretch, ok := box.(stretcher); ok {
 				total.Stretch.IncrementBy(stretch.GetStretch())

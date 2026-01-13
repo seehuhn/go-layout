@@ -32,15 +32,13 @@ func Skip(length float64, plus float64, plusLevel int, minus float64, minusLevel
 	}
 }
 
+// Glue represents elastic space that can stretch or shrink to fill available
+// room. The Length field gives the natural size, while Stretch and Shrink
+// specify how much the glue can expand or contract.
 type Glue struct {
 	Length  float64
 	Stretch glueAmount
 	Shrink  glueAmount
-}
-
-func (g *Glue) isInfiniteShrink() bool {
-	shrink := g.Shrink
-	return shrink.Val != 0 && shrink.Order > 0
 }
 
 func (g *Glue) Plus(other *Glue) *Glue {

@@ -246,7 +246,7 @@ func VBox(contents ...Box) Box {
 		res.Height += ext.Height + ext.Depth
 	}
 	if len(contents) > 0 {
-		d := contents[0].Extent().Depth
+		d := contents[len(contents)-1].Extent().Depth
 		res.Height -= d
 		res.Depth += d
 	}

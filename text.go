@@ -31,6 +31,7 @@ type TextBox struct {
 	Glyphs *font.GlyphSeq
 }
 
+// FontInfo describes the font, size, and color to use for typesetting text.
 type FontInfo struct {
 	Font  font.Layouter
 	Size  float64

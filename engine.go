@@ -25,6 +25,7 @@ import (
 	"seehuhn.de/go/pdf"
 	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/graphics/content/builder"
+	"seehuhn.de/go/pdf/page"
 )
 
 // A list of horizontal mode items can contain the following types:
@@ -67,7 +68,7 @@ type Engine struct {
 	PageNumber     int
 	BeforePageFunc func(int, *builder.Builder) error
 	AfterPageFunc  func(int, *builder.Builder) error
-	AfterCloseFunc func(pageDict pdf.Dict) error
+	AfterCloseFunc func(p *page.Page) error
 
 	DebugPageNumber int
 
@@ -81,12 +82,15 @@ type Engine struct {
 	records   []*boxRecord
 }
 
+// BoxInfo describes the location of a box after page breaking.
 type BoxInfo struct {
 	PageRef pdf.Reference
 	BBox    *pdf.Rectangle
 	PageNo  int
 }
 
+// HAddText adds text to the horizontal mode list.
+// Spaces in the text are converted to glue, and words are converted to boxes.
 func (e *Engine) HAddText(F *FontInfo, text string) {
 	if len(e.hList) == 0 && e.ParIndent != nil {
 		e.hList = append(e.hList, e.ParIndent)
@@ -197,11 +201,14 @@ func (e *Engine) HAddGlue(g *Glue) {
 	e.hList = append(e.hList, g)
 }
 
+// VAddGlue adds a glue item to the vertical mode list.
 func (e *Engine) VAddGlue(g *Glue) {
 	// TODO(voss): check for infinite shrinkability
 	e.vList = append(e.vList, g)
 }
 
+// VAddBox adds a box to the vertical mode list.
+// Appropriate interline glue is inserted automatically.
 func (e *Engine) VAddBox(b Box) {
 	ext := b.Extent()
 	if len(e.vList) > 0 {
@@ -223,6 +230,8 @@ func (e *Engine) VAddBox(b Box) {
 	e.prevDepth = ext.Depth
 }
 
+// VAddPenalty adds a penalty to the vertical mode list.
+// Penalties influence where page breaks occur.
 func (e *Engine) VAddPenalty(p float64) {
 	e.vList = append(e.vList, penalty(p))
 }
@@ -242,6 +251,9 @@ func (obj penalty) Draw(page *builder.Builder, xPos, yPos float64) {
 	// pass
 }
 
+// VRecordNextBox registers a callback to be invoked when the next box is
+// placed on a page. The callback receives information about the box's
+// final location.
 func (e *Engine) VRecordNextBox(cb func(*BoxInfo)) {
 	e.vRecordCB = append(e.vRecordCB, cb)
 }

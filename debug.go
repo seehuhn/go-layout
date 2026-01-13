@@ -29,6 +29,7 @@ import (
 	"seehuhn.de/go/pdf/graphics/content"
 	"seehuhn.de/go/pdf/graphics/content/builder"
 	"seehuhn.de/go/pdf/graphics/extgstate"
+	"seehuhn.de/go/pdf/page"
 	"seehuhn.de/go/pdf/pagetree"
 )
 
@@ -84,7 +85,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 	visualHeight := vPos[len(vPos)-1]
 
 	// Create a builder to accumulate drawing operations
-	page := builder.New(content.Page, nil)
+	b := builder.New(content.Page, nil)
 
 	yTop := bottomMargin + visualHeight
 	target := height
@@ -110,22 +111,22 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 
 		// draw the box contents
 		if !ext.WhiteSpaceOnly {
-			page.PushGraphicsState()
-			page.SetFillColor(color.DeviceGray(0.9))
-			page.Rectangle(leftMargin-1, yDescent-1, ext.Width+2, yAscent-yDescent+2)
-			page.Fill()
-			page.PopGraphicsState()
+			b.PushGraphicsState()
+			b.SetFillColor(color.DeviceGray(0.9))
+			b.Rectangle(leftMargin-1, yDescent-1, ext.Width+2, yAscent-yDescent+2)
+			b.Fill()
+			b.PopGraphicsState()
 
-			box.Draw(page, leftMargin, yBase)
+			box.Draw(b, leftMargin, yBase)
 		}
 
 		// show the box types
-		page.TextBegin()
-		page.TextSetFont(F, 7)
+		b.TextBegin()
+		b.TextSetFont(F, 7)
 		if ext.WhiteSpaceOnly {
-			page.TextFirstLine(leftMargin+2, yMid-2)
+			b.TextFirstLine(leftMargin+2, yMid-2)
 		} else {
-			page.TextFirstLine(leftMargin+2, yAscent-1)
+			b.TextFirstLine(leftMargin+2, yAscent-1)
 		}
 		var label string
 		switch obj := box.(type) {
@@ -149,14 +150,14 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 		default:
 			label = fmt.Sprintf("%T", box)
 		}
-		page.TextShow(label)
-		page.TextEnd()
+		b.TextShow(label)
+		b.TextEnd()
 
 		// draw the geometry annotations
-		page.PushGraphicsState()
-		page.SetStrokeColor(geomColor)
-		page.SetLineCap(graphics.LineCapRound)
-		page.SetLineWidth(0.5)
+		b.PushGraphicsState()
+		b.SetStrokeColor(geomColor)
+		b.SetLineCap(graphics.LineCapRound)
+		b.SetLineWidth(0.5)
 		x := leftMargin + width + 10.0
 		if isStretch || isShrink {
 			h := yAscent - yDescent
@@ -167,23 +168,23 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 			dh := h / float64(numWiggles)
 			y := yAscent
 			xw := x - 2
-			page.MoveTo(xw, y)
+			b.MoveTo(xw, y)
 			for i := 1; i <= numWiggles; i++ {
 				oldX := xw
 				oldY := y
 				xw = 2*x - xw
 				y -= dh
-				page.CurveTo(oldX, oldY-2, xw, y+2, xw, y)
+				b.CurveTo(oldX, oldY-2, xw, y+2, xw, y)
 			}
-			page.Stroke()
+			b.Stroke()
 		} else if !ext.WhiteSpaceOnly {
-			page.MoveTo(x, yAscent)
-			page.LineTo(x, yDescent)
-			page.MoveTo(x-2, yAscent)
-			page.LineTo(x+2, yAscent)
-			page.MoveTo(x-2, yDescent)
-			page.LineTo(x+2, yDescent)
-			page.Stroke()
+			b.MoveTo(x, yAscent)
+			b.LineTo(x, yDescent)
+			b.MoveTo(x-2, yAscent)
+			b.LineTo(x+2, yAscent)
+			b.MoveTo(x-2, yDescent)
+			b.LineTo(x+2, yDescent)
+			b.Stroke()
 		}
 
 		// show vertial sizes in the right margin
@@ -195,31 +196,31 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 			label = label + fmt.Sprintf(" minus %s", formatS(shr.GetShrink()))
 		}
 		if !ext.WhiteSpaceOnly || label != "0" {
-			page.TextBegin()
-			page.SetFillColor(geomColor)
-			page.TextSetFont(F, 7)
-			page.TextFirstLine(leftMargin+width+15, yMid-2)
-			page.TextShow(label)
-			page.TextEnd()
+			b.TextBegin()
+			b.SetFillColor(geomColor)
+			b.TextSetFont(F, 7)
+			b.TextFirstLine(leftMargin+width+15, yMid-2)
+			b.TextShow(label)
+			b.TextEnd()
 		}
 
 		// draw a mark to indicate the target height
 		newTarget := target - ext.Height - ext.Depth
 		if target > 0 && newTarget <= 0 {
 			y := yAscent - target
-			page.SetFillColor(geomColor)
-			page.MoveTo(leftMargin-8, y)
-			page.LineTo(leftMargin-18, y+4)
-			page.LineTo(leftMargin-18, y-4)
-			page.Fill()
+			b.SetFillColor(geomColor)
+			b.MoveTo(leftMargin-8, y)
+			b.LineTo(leftMargin-18, y+4)
+			b.LineTo(leftMargin-18, y-4)
+			b.Fill()
 		}
 		target = newTarget
-		page.PopGraphicsState()
+		b.PopGraphicsState()
 	}
 
 	// mark the line break candidates
-	page.PushGraphicsState()
-	page.SetFillColor(breakColor)
+	b.PushGraphicsState()
+	b.SetFillColor(breakColor)
 	x := leftMargin + 0.5*width
 	bestPos := -1
 	bestCost := math.Inf(+1)
@@ -231,13 +232,13 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 		}
 
 		y := yTop - vPos[c.pos]
-		page.TextBegin()
-		page.TextSetFont(F, 7)
-		page.TextFirstLine(x, y-3)
-		page.TextShowAligned(fmt.Sprintf("— b=%s, p=%s —", format(c.badness), format(float64(c.penalty))), 0, 0.5)
-		page.TextEnd()
+		b.TextBegin()
+		b.TextSetFont(F, 7)
+		b.TextFirstLine(x, y-3)
+		b.TextShowAligned(fmt.Sprintf("— b=%s, p=%s —", format(c.badness), format(float64(c.penalty))), 0, 0.5)
+		b.TextEnd()
 	}
-	page.PopGraphicsState()
+	b.PopGraphicsState()
 
 	// mark the accumulated page height, minus the required total
 	total := &Glue{
@@ -252,14 +253,14 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 	total.Length += topSkip
 
 	if topSkip > 0 {
-		page.TextBegin()
-		page.SetFillColor(breakColor)
-		page.TextSetFont(F, 7)
-		page.TextFirstLine(leftMargin+width+15, yTop+5)
-		page.TextShow(fmt.Sprintf("%s (topskip)", format(topSkip)))
-		page.TextEnd()
+		b.TextBegin()
+		b.SetFillColor(breakColor)
+		b.TextSetFont(F, 7)
+		b.TextFirstLine(leftMargin+width+15, yTop+5)
+		b.TextShow(fmt.Sprintf("%s (topskip)", format(topSkip)))
+		b.TextEnd()
 	}
-	prevDept := 0.0
+	prevDepth := 0.0
 	for i := 0; i < bestPos; i++ {
 		box := e.vList[i]
 		if _, isPenalty := box.(penalty); isPenalty {
@@ -267,8 +268,8 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 		}
 
 		ext := box.Extent()
-		total.Length += ext.Height + prevDept
-		prevDept = ext.Depth
+		total.Length += ext.Height + prevDepth
+		prevDepth = ext.Depth
 
 		if stretch, ok := box.(stretcher); ok {
 			total.Stretch.IncrementBy(stretch.GetStretch())
@@ -277,33 +278,33 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 			total.Shrink.IncrementBy(shrink.GetShrink())
 		}
 
-		page.TextBegin()
-		page.SetFillColor(breakColor)
-		page.TextSetFont(F, 7)
-		page.TextFirstLine(leftMargin+width-30, yTop-vPos[i+1]-2)
-		page.TextShow(fmt.Sprintf("%s plus %s minus %s",
+		b.TextBegin()
+		b.SetFillColor(breakColor)
+		b.TextSetFont(F, 7)
+		b.TextFirstLine(leftMargin+width-30, yTop-vPos[i+1]-2)
+		b.TextShow(fmt.Sprintf("%s plus %s minus %s",
 			format(total.Length), formatS(total.Stretch), formatS(total.Shrink)))
-		page.TextEnd()
+		b.TextEnd()
 	}
 	y := yTop - vPos[bestPos] - 12
-	if b := e.BottomGlue; b != nil {
-		page.TextBegin()
-		page.SetFillColor(breakColor)
-		page.TextSetFont(F, 7)
-		page.TextFirstLine(leftMargin+width+15, y)
-		page.TextShow(fmt.Sprintf("%s plus %s minus %s (bottomglue)",
-			format(b.Length), formatS(b.Stretch), formatS(b.Shrink)))
-		page.TextEnd()
-		total.Add(b)
+	if bg := e.BottomGlue; bg != nil {
+		b.TextBegin()
+		b.SetFillColor(breakColor)
+		b.TextSetFont(F, 7)
+		b.TextFirstLine(leftMargin+width+15, y)
+		b.TextShow(fmt.Sprintf("%s plus %s minus %s (bottomglue)",
+			format(bg.Length), formatS(bg.Stretch), formatS(bg.Shrink)))
+		b.TextEnd()
+		total.Add(bg)
 		y -= 10
 
-		page.TextBegin()
-		page.SetFillColor(breakColor)
-		page.TextSetFont(F, 7)
-		page.TextFirstLine(leftMargin+width-30, y)
-		page.TextShow(fmt.Sprintf("%s plus %s minus %s",
+		b.TextBegin()
+		b.SetFillColor(breakColor)
+		b.TextSetFont(F, 7)
+		b.TextFirstLine(leftMargin+width-30, y)
+		b.TextShow(fmt.Sprintf("%s plus %s minus %s",
 			format(total.Length), formatS(total.Stretch), formatS(total.Shrink)))
-		page.TextEnd()
+		b.TextEnd()
 		y -= 10
 	}
 
@@ -313,54 +314,33 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 	}
 
 	// draw the final page outlines
-	page.PushGraphicsState()
-	page.SetStrokeColor(breakColor)
-	page.SetLineWidth(2)
-	page.MoveTo(leftMargin+30, yTop-vPos[bestPos]-2)
-	page.LineTo(leftMargin-5, yTop-vPos[bestPos]-2)
-	page.LineTo(leftMargin-5, yTop+2)
-	page.LineTo(leftMargin+30, yTop+2)
+	b.PushGraphicsState()
+	b.SetStrokeColor(breakColor)
+	b.SetLineWidth(2)
+	b.MoveTo(leftMargin+30, yTop-vPos[bestPos]-2)
+	b.LineTo(leftMargin-5, yTop-vPos[bestPos]-2)
+	b.LineTo(leftMargin-5, yTop+2)
+	b.LineTo(leftMargin+30, yTop+2)
 	if next < len(e.vList) {
-		page.MoveTo(leftMargin-5, bottomMargin)
-		page.LineTo(leftMargin-5, yTop-vPos[next]+2)
-		page.LineTo(leftMargin+30, yTop-vPos[next]+2)
+		b.MoveTo(leftMargin-5, bottomMargin)
+		b.LineTo(leftMargin-5, yTop-vPos[next]+2)
+		b.LineTo(leftMargin+30, yTop-vPos[next]+2)
 	}
-	page.Stroke()
-	page.PopGraphicsState()
+	b.Stroke()
+	b.PopGraphicsState()
 
-	// Write the content stream
-	contentRef := tree.Out.Alloc()
-	stream, err := tree.Out.OpenStream(contentRef, nil, pdf.FilterCompress{})
-	if err != nil {
-		return err
-	}
-	if err := content.Write(stream, page.Stream, tree.Out.GetMeta().Version, content.Page, page.Resources); err != nil {
-		return err
-	}
-	if err := stream.Close(); err != nil {
-		return err
-	}
-
-	// Build page dictionary
-	dict := pdf.Dict{
-		"Type":     pdf.Name("Page"),
-		"Contents": contentRef,
-		"MediaBox": &pdf.Rectangle{
+	// Create page object
+	p := &page.Page{
+		MediaBox: &pdf.Rectangle{
 			LLx: 0,
 			LLy: 0,
 			URx: leftMargin + width + rightMargin,
 			URy: topMargin + visualHeight + bottomMargin,
 		},
+		Resources: b.Resources,
+		Contents:  []*page.Content{{Operators: b.Stream}},
 	}
-	resObj, err := rm.Embed(page.Resources)
-	if err != nil {
-		return err
-	}
-	if resObj != nil {
-		dict["Resources"] = resObj
-	}
-	err = tree.AppendPageDict(tree.Out.Alloc(), dict)
-	if err != nil {
+	if err := tree.AppendPage(p); err != nil {
 		return err
 	}
 
@@ -460,7 +440,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 	// Create a page which shows the line breaks.
 
 	// Create a builder to accumulate drawing operations
-	page := builder.New(content.Page, nil)
+	b := builder.New(content.Page, nil)
 
 	gs := &extgstate.ExtGState{
 		FillAlpha: 0.75,
@@ -475,15 +455,15 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 	}
 
 	// Show the text width
-	page.PushGraphicsState()
-	page.SetStrokeColor(breakColor)
-	page.SetLineWidth(0.5)
-	page.MoveTo(leftMargin, 0)
-	page.LineTo(leftMargin, bottomMargin+visualHeight+topMargin)
-	page.MoveTo(leftMargin+e.TextWidth, 0)
-	page.LineTo(leftMargin+e.TextWidth, bottomMargin+visualHeight+topMargin)
-	page.Stroke()
-	page.PopGraphicsState()
+	b.PushGraphicsState()
+	b.SetStrokeColor(breakColor)
+	b.SetLineWidth(0.5)
+	b.MoveTo(leftMargin, 0)
+	b.LineTo(leftMargin, bottomMargin+visualHeight+topMargin)
+	b.MoveTo(leftMargin+e.TextWidth, 0)
+	b.LineTo(leftMargin+e.TextWidth, bottomMargin+visualHeight+topMargin)
+	b.Stroke()
+	b.PopGraphicsState()
 
 	x := float64(leftMargin)
 	y := bottomMargin + visualHeight
@@ -492,7 +472,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 		y -= ext.Height
 
 		// draw the line
-		box.Draw(page, x, y)
+		box.Draw(b, x, y)
 
 		// draw the first few tokens after the linebreak, to illustrate
 		// the linebreak decision
@@ -517,58 +497,58 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 			}
 			pos++
 		}
-		page.PushGraphicsState()
+		b.PushGraphicsState()
 		overflow := HBox(extra...)
 		ext = overflow.Extent()
-		page.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
-		page.ClipNonZero()
-		page.EndPath()
-		overflow.Draw(page, xEnd, y)
-		page.SetExtGState(gs)
-		page.SetFillColor(color.DeviceRGB{1, 1, 1})
-		page.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
-		page.Fill()
-		page.PopGraphicsState()
+		b.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
+		b.ClipNonZero()
+		b.EndPath()
+		overflow.Draw(b, xEnd, y)
+		b.SetExtGState(gs)
+		b.SetFillColor(color.DeviceRGB{1, 1, 1})
+		b.Rectangle(xEnd, y-ext.Depth, leftMargin+e.TextWidth+72-xEnd, ext.Height+ext.Depth)
+		b.Fill()
+		b.PopGraphicsState()
 
 		// draw a little triangle for each potential breakpoint
-		page.PushGraphicsState()
-		page.SetFillColor(breakColor)
+		b.PushGraphicsState()
+		b.SetFillColor(breakColor)
 		for j, x := range xx {
 			if !isValidBreakpoint(hList, startPos[i]+j) {
 				continue
 			}
-			page.MoveTo(x, y-1)
-			page.LineTo(x-1, y-4)
-			page.LineTo(x+1, y-4)
+			b.MoveTo(x, y-1)
+			b.LineTo(x-1, y-4)
+			b.LineTo(x+1, y-4)
 		}
-		page.Fill()
-		page.PopGraphicsState()
+		b.Fill()
+		b.PopGraphicsState()
 
 		// add the annotations
-		page.PushGraphicsState()
-		page.SetLineWidth(3.5)
-		page.SetStrokeColor(color.DeviceGray(0.9))
-		page.MoveTo(leftMargin+e.TextWidth+72+1.5, 0)
-		page.LineTo(leftMargin+e.TextWidth+72+1.5, bottomMargin+visualHeight+topMargin)
-		page.Stroke()
-		page.SetLineWidth(1.5)
-		page.SetStrokeColor(color.DeviceGray(0.8))
-		page.MoveTo(leftMargin+e.TextWidth+72+0.5, 0)
-		page.LineTo(leftMargin+e.TextWidth+72+0.5, bottomMargin+visualHeight+topMargin)
-		page.Stroke()
-		page.SetLineWidth(0.5)
-		page.SetStrokeColor(color.DeviceGray(0.6))
-		page.MoveTo(leftMargin+e.TextWidth+72, 0)
-		page.LineTo(leftMargin+e.TextWidth+72, bottomMargin+visualHeight+topMargin)
-		page.Stroke()
-		page.PopGraphicsState()
+		b.PushGraphicsState()
+		b.SetLineWidth(3.5)
+		b.SetStrokeColor(color.DeviceGray(0.9))
+		b.MoveTo(leftMargin+e.TextWidth+72+1.5, 0)
+		b.LineTo(leftMargin+e.TextWidth+72+1.5, bottomMargin+visualHeight+topMargin)
+		b.Stroke()
+		b.SetLineWidth(1.5)
+		b.SetStrokeColor(color.DeviceGray(0.8))
+		b.MoveTo(leftMargin+e.TextWidth+72+0.5, 0)
+		b.LineTo(leftMargin+e.TextWidth+72+0.5, bottomMargin+visualHeight+topMargin)
+		b.Stroke()
+		b.SetLineWidth(0.5)
+		b.SetStrokeColor(color.DeviceGray(0.6))
+		b.MoveTo(leftMargin+e.TextWidth+72, 0)
+		b.LineTo(leftMargin+e.TextWidth+72, bottomMargin+visualHeight+topMargin)
+		b.Stroke()
+		b.PopGraphicsState()
 
-		page.TextBegin()
-		page.TextSetFont(F, 6)
-		page.SetFillColor(annotationColor)
-		page.TextFirstLine(leftMargin+e.TextWidth+72+10, y+4)
+		b.TextBegin()
+		b.TextSetFont(F, 6)
+		b.SetFillColor(annotationColor)
+		b.TextFirstLine(leftMargin+e.TextWidth+72+10, y+4)
 		total := totalWidthAndGlue(lineContents[i])
-		page.TextShow(fmt.Sprintf("%+.1f", e.TextWidth-total.Length))
+		b.TextShow(fmt.Sprintf("%+.1f", e.TextWidth-total.Length))
 		var r float64
 		if total.Length > e.TextWidth+0.05 {
 			r = (e.TextWidth - total.Length) / total.Shrink.Val
@@ -577,7 +557,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 				r = 0
 				label = " / inf"
 			}
-			page.TextShow(label)
+			b.TextShow(label)
 		} else if total.Length < e.TextWidth-0.05 {
 			r = (e.TextWidth - total.Length) / total.Stretch.Val
 			label := fmt.Sprintf(" / %.1f (%.0f%%)", total.Stretch.Val, 100*r)
@@ -585,52 +565,32 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 				r = 0
 				label = " / inf"
 			}
-			page.TextShow(label)
+			b.TextShow(label)
 		}
-		page.TextSecondLine(0, -7)
-		page.TextShowAligned(fmt.Sprintf(" r = %.2f", r), 30, 0)
+		b.TextSecondLine(0, -7)
+		b.TextShowAligned(fmt.Sprintf(" r = %.2f", r), 30, 0)
 		c := getFitnessClass(r)
 		if c != fitnessDecent {
-			page.TextShowAligned(c.String(), 25, 1)
+			b.TextShowAligned(c.String(), 25, 1)
 		}
-		page.TextEnd()
+		b.TextEnd()
 
 		y -= ext.Depth
 		y -= 10
 	}
 
-	// Write the content stream
-	contentRef := tree.Out.Alloc()
-	stream, err := tree.Out.OpenStream(contentRef, nil, pdf.FilterCompress{})
-	if err != nil {
-		return err
-	}
-	if err := content.Write(stream, page.Stream, tree.Out.GetMeta().Version, content.Page, page.Resources); err != nil {
-		return err
-	}
-	if err := stream.Close(); err != nil {
-		return err
-	}
-
-	// Build page dictionary
-	dict := pdf.Dict{
-		"Type":     pdf.Name("Page"),
-		"Contents": contentRef,
-		"MediaBox": &pdf.Rectangle{
+	// Create page object
+	p := &page.Page{
+		MediaBox: &pdf.Rectangle{
 			LLx: 0,
 			LLy: 0,
 			URx: leftMargin + e.TextWidth + rightMargin,
 			URy: topMargin + visualHeight + bottomMargin,
 		},
+		Resources: b.Resources,
+		Contents:  []*page.Content{{Operators: b.Stream}},
 	}
-	resObj, err := rm.Embed(page.Resources)
-	if err != nil {
-		return err
-	}
-	if resObj != nil {
-		dict["Resources"] = resObj
-	}
-	if err := tree.AppendPageDict(tree.Out.Alloc(), dict); err != nil {
+	if err := tree.AppendPage(p); err != nil {
 		return err
 	}
 
