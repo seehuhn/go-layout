@@ -29,7 +29,6 @@ import (
 	"seehuhn.de/go/pdf/graphics/content"
 	"seehuhn.de/go/pdf/graphics/content/builder"
 	"seehuhn.de/go/pdf/graphics/extgstate"
-	"seehuhn.de/go/pdf/graphics/state"
 	"seehuhn.de/go/pdf/pagetree"
 )
 
@@ -360,7 +359,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 	if resObj != nil {
 		dict["Resources"] = resObj
 	}
-	err = tree.AppendPage(dict)
+	err = tree.AppendPageDict(tree.Out.Alloc(), dict)
 	if err != nil {
 		return err
 	}
@@ -465,7 +464,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 
 	gs := &extgstate.ExtGState{
 		FillAlpha: 0.75,
-		Set:       state.FillAlpha,
+		Set:       graphics.StateFillAlpha,
 	}
 
 	visualHeight := 0.0
@@ -631,7 +630,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 	if resObj != nil {
 		dict["Resources"] = resObj
 	}
-	if err := tree.AppendPage(dict); err != nil {
+	if err := tree.AppendPageDict(tree.Out.Alloc(), dict); err != nil {
 		return err
 	}
 

@@ -120,7 +120,7 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, rm *pdf.ResourceManager, fin
 			}
 		}
 
-		err = tree.AppendPageRef(pageRef, pageDict)
+		err = tree.AppendPageDict(pageRef, pageDict)
 		if err != nil {
 			return err
 		}
