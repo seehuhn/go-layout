@@ -72,7 +72,7 @@ type Engine struct {
 
 	DebugPageNumber int
 
-	hList      []interface{} // list of *hModeBox, *Glue, *hModePenalty
+	hList      []any // list of *hModeBox, *Glue, *hModePenalty
 	afterPunct bool
 	afterSpace bool
 

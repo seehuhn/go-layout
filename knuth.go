@@ -29,7 +29,7 @@ type knuthPlassLineBreaker struct {
 
 	lineWidth func(lineNo int) *Glue
 
-	hList []interface{}
+	hList []any
 
 	active []*knuthPlassNode
 	total  *Glue
@@ -208,7 +208,7 @@ func pow3(x float64) float64 {
 	return x * x * x
 }
 
-func isValidBreakpoint(hList []interface{}, pos int) bool {
+func isValidBreakpoint(hList []any, pos int) bool {
 	switch h := hList[pos].(type) {
 	case *hModePenalty:
 		return h.Penalty < PenaltyPreventBreak

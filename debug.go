@@ -161,10 +161,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 		x := leftMargin + width + 10.0
 		if isStretch || isShrink {
 			h := yAscent - yDescent
-			numWiggles := int(math.Round(h) / 3)
-			if numWiggles < 4 {
-				numWiggles = 4
-			}
+			numWiggles := max(int(math.Round(h)/3), 4)
 			dh := h / float64(numWiggles)
 			y := yAscent
 			xw := x - 2
@@ -386,7 +383,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 	breaks := br.Run()
 
 	var startPos []int
-	var hLists [][]interface{}
+	var hLists [][]any
 	var lineContents [][]Box
 	var lineBoxes []Box
 	var xxx [][]float64
