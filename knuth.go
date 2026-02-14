@@ -32,25 +32,25 @@ type knuthPlassLineBreaker struct {
 	hList []any
 
 	active []*knuthPlassNode
-	total  *Glue
+	total  Glue
 
-	scratch *Glue
+	scratch Glue
 }
 
 type knuthPlassNode struct {
 	pos           int
 	line          int
 	fitness       fitnessClass
-	total         *Glue
+	total         Glue
 	totalDemerits float64
 	previous      *knuthPlassNode
 }
 
 func (br *knuthPlassLineBreaker) Run() []int {
-	start := &knuthPlassNode{total: &Glue{}}
+	start := &knuthPlassNode{}
 	br.active = append(br.active[:0], start)
-	br.total = &Glue{}
-	br.scratch = &Glue{}
+	br.total = Glue{}
+	br.scratch = Glue{}
 
 	for b := 0; b < len(br.hList); b++ {
 		if isValidBreakpoint(br.hList, b) {
@@ -97,7 +97,7 @@ func (br *knuthPlassLineBreaker) Run() []int {
 
 				if D < math.Inf(+1) {
 					// insert new active nodes for breaks from Ac to b
-					totalAfterB := br.total.Clone()
+					totalAfterB := br.total
 				afterBLoop:
 					for i := b; i < len(br.hList); i++ {
 						switch h := br.hList[i].(type) {
@@ -238,12 +238,12 @@ func (br *knuthPlassLineBreaker) IsFlagged(pos int) bool {
 }
 
 func (br *knuthPlassLineBreaker) AdjustmentRatio(a *knuthPlassNode, b int) float64 {
-	br.scratch.SetMinus(br.total, a.total)
+	br.scratch.SetMinus(&br.total, &a.total)
 	if p, isPenalty := br.hList[b].(*hModePenalty); isPenalty {
 		br.scratch.Length += p.width
 	}
 	available := br.lineWidth(a.line)
-	br.scratch.SetMinus(br.scratch, available)
+	br.scratch.SetMinus(&br.scratch, available)
 	if br.scratch.Length < -1e-3 { // loose line
 		stretch := br.scratch.Stretch
 		if stretch.Order > 0 {
