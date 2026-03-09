@@ -335,7 +335,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 			URy: topMargin + visualHeight + bottomMargin,
 		},
 		Resources: b.Resources,
-		Contents:  []*page.Content{{Operators: b.Stream}},
+		Contents:  []content.Stream{b.Stream},
 	}
 	if err := tree.AppendPage(p); err != nil {
 		return err
@@ -585,7 +585,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 			URy: topMargin + visualHeight + bottomMargin,
 		},
 		Resources: b.Resources,
-		Contents:  []*page.Content{{Operators: b.Stream}},
+		Contents:  []content.Stream{b.Stream},
 	}
 	if err := tree.AppendPage(p); err != nil {
 		return err

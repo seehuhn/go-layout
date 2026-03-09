@@ -80,7 +80,7 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, rm *pdf.ResourceManager, fin
 		p := &page.Page{
 			MediaBox:  e.PageSize,
 			Resources: b.Resources,
-			Contents:  []*page.Content{{Operators: b.Stream}},
+			Contents:  []content.Stream{b.Stream},
 		}
 
 		pageRef := tree.Out.Alloc()
