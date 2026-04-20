@@ -49,7 +49,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 		breakColor = color.DeviceRGB{0.9, 0, 0}
 	)
 
-	F := standard.TimesRoman.New()
+	F := font.Must(standard.TimesRoman.New())
 
 	height := e.TextHeight
 	cand := e.vGetCandidates(height)
