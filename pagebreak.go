@@ -85,7 +85,7 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, rm *pdf.ResourceManager, fin
 		p := &page.Page{
 			MediaBox:  e.PageSize,
 			Resources: b.Resources,
-			Contents:  []content.Segment{seg},
+			Contents:  []page.Segment{seg},
 		}
 
 		pageRef := tree.Out.Alloc()
