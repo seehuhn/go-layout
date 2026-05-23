@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	golang.org/x/text v0.35.0
-	seehuhn.de/go/pdf v0.7.4-0.20260523115953-b5b5280f5439
+	seehuhn.de/go/pdf v0.7.4-0.20260523212516-b5947b595c90
 	seehuhn.de/go/sfnt v0.7.4-0.20260520203640-d0b8e8de62c2
 )
 
