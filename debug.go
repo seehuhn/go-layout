@@ -85,7 +85,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 	visualHeight := vPos[len(vPos)-1]
 
 	// Create a builder to accumulate drawing operations
-	b := builder.New(content.Page, nil)
+	b := builder.New(content.Page, nil, pdf.GetVersion(rm.Out))
 
 	yTop := bottomMargin + visualHeight
 	target := height
@@ -326,6 +326,11 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 	b.Stroke()
 	b.PopGraphicsState()
 
+	seg, err := b.Harvest()
+	if err != nil {
+		return err
+	}
+
 	// Create page object
 	p := &page.Page{
 		MediaBox: &pdf.Rectangle{
@@ -335,7 +340,7 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 			URy: topMargin + visualHeight + bottomMargin,
 		},
 		Resources: b.Resources,
-		Contents:  []content.Stream{b.Stream},
+		Contents:  []content.Segment{seg},
 	}
 	if err := tree.AppendPage(p); err != nil {
 		return err
@@ -437,7 +442,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 	// Create a page which shows the line breaks.
 
 	// Create a builder to accumulate drawing operations
-	b := builder.New(content.Page, nil)
+	b := builder.New(content.Page, nil, pdf.GetVersion(rm.Out))
 
 	gs := &extgstate.ExtGState{
 		FillAlpha: 0.75,
@@ -576,6 +581,11 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 		y -= 10
 	}
 
+	seg, err := b.Harvest()
+	if err != nil {
+		return err
+	}
+
 	// Create page object
 	p := &page.Page{
 		MediaBox: &pdf.Rectangle{
@@ -585,7 +595,7 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 			URy: topMargin + visualHeight + bottomMargin,
 		},
 		Resources: b.Resources,
-		Contents:  []content.Stream{b.Stream},
+		Contents:  []content.Segment{seg},
 	}
 	if err := tree.AppendPage(p); err != nil {
 		return err

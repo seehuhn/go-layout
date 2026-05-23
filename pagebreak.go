@@ -58,7 +58,7 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, rm *pdf.ResourceManager, fin
 		}
 
 		// Create a builder to accumulate drawing operations
-		b := builder.New(content.Page, nil)
+		b := builder.New(content.Page, nil, pdf.GetVersion(rm.Out))
 
 		if e.BeforePageFunc != nil {
 			err := e.BeforePageFunc(e.PageNumber, b)
@@ -76,11 +76,16 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, rm *pdf.ResourceManager, fin
 			}
 		}
 
+		seg, err := b.Harvest()
+		if err != nil {
+			return err
+		}
+
 		// Create page object
 		p := &page.Page{
 			MediaBox:  e.PageSize,
 			Resources: b.Resources,
-			Contents:  []content.Stream{b.Stream},
+			Contents:  []content.Segment{seg},
 		}
 
 		pageRef := tree.Out.Alloc()
@@ -104,7 +109,7 @@ func (e *Engine) AppendPages(tree *pagetree.Writer, rm *pdf.ResourceManager, fin
 			}
 		}
 
-		err := tree.AppendPageRef(pageRef, p)
+		err = tree.AppendPageRef(pageRef, p)
 		if err != nil {
 			return err
 		}
