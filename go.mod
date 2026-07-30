@@ -11,7 +11,7 @@ require (
 require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	golang.org/x/image v0.44.0 // indirect
-	seehuhn.de/go/dag v0.0.0-20250630092703-dd0e13308cb3 // indirect
+	seehuhn.de/go/dag v1.0.0 // indirect
 	seehuhn.de/go/geom v0.7.4 // indirect
 	seehuhn.de/go/icc v0.7.4 // indirect
 	seehuhn.de/go/membudget v0.7.4 // indirect
