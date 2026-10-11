@@ -51,11 +51,9 @@ func (ext *BoxExtent) Extent() *BoxExtent {
 // Rule returns a box with the given dimensions filled solid black.
 func Rule(width, height, depth float64) Box {
 	return &ruleBox{
-		BoxExtent: BoxExtent{
-			Width:  width,
-			Height: height,
-			Depth:  depth,
-		},
+		Width:  width,
+		Height: height,
+		Depth:  depth,
 	}
 }
 
@@ -138,12 +136,10 @@ func HBox(children ...Box) Box {
 	return res
 }
 
-// HBoxTo creates a new HBox with the given width
+// HBoxTo creates a new HBox with the given width.
 func HBoxTo(width float64, contents ...Box) Box {
 	res := &hBox{
-		BoxExtent: BoxExtent{
-			Width: width,
-		},
+		Width:    width,
 		Contents: contents,
 	}
 	first := true
@@ -257,9 +253,7 @@ func VBox(contents ...Box) Box {
 // The baseline of the box is at the baseline of the last child box.
 func VBoxTo(height float64, contents ...Box) Box {
 	res := &vBox{
-		BoxExtent: BoxExtent{
-			Height: height,
-		},
+		Height:   height,
 		Contents: contents,
 	}
 	if len(contents) > 0 {

@@ -24,27 +24,18 @@ import (
 func TestVBreakCandidates1(t *testing.T) {
 	vList := []Box{
 		&ruleBox{
-			BoxExtent: BoxExtent{
-				Width:  10,
-				Height: 10,
-				Depth:  0,
-			},
+			Width:  10,
+			Height: 10,
 		},
 		penalty(123),
 		&ruleBox{
-			BoxExtent: BoxExtent{
-				Width:  10,
-				Height: 10,
-				Depth:  0,
-			},
+			Width:  10,
+			Height: 10,
 		},
 		penalty(456),
 		&ruleBox{
-			BoxExtent: BoxExtent{
-				Width:  10,
-				Height: 10,
-				Depth:  0,
-			},
+			Width:  10,
+			Height: 10,
 		},
 	}
 	e := &Engine{
@@ -86,27 +77,21 @@ func TestVBreakCandidates1(t *testing.T) {
 func TestVBreakCandidates2(t *testing.T) {
 	vList := []Box{
 		&ruleBox{
-			BoxExtent: BoxExtent{
-				Width:  10,
-				Height: 10,
-				Depth:  5,
-			},
+			Width:  10,
+			Height: 10,
+			Depth:  5,
 		},
 		penalty(1),
 		&ruleBox{
-			BoxExtent: BoxExtent{
-				Width:  10,
-				Height: 10,
-				Depth:  5,
-			},
+			Width:  10,
+			Height: 10,
+			Depth:  5,
 		},
 		penalty(2),
 		&ruleBox{
-			BoxExtent: BoxExtent{
-				Width:  10,
-				Height: 10,
-				Depth:  5,
-			},
+			Width:  10,
+			Height: 10,
+			Depth:  5,
 		},
 	}
 	e := &Engine{
