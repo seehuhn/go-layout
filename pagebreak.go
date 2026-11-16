@@ -195,17 +195,17 @@ func (e *Engine) vGetCandidates(height float64) []vCandidate {
 			} else if total.Length < height {
 				// need to stretch
 				needStretch := height - total.Length
-				canStretch := total.Stretch.Val
-				if total.Stretch.Order > 0 {
-					canStretch = height
+				canStretch, order := total.Stretch.Dominant()
+				if order == 0 {
+					badness = 100 * math.Pow(needStretch/canStretch, 3)
 				}
-				badness = 100 * math.Pow(needStretch/canStretch, 3)
 			} else {
 				// need to shrink
 				needShrink := total.Length - height
-				canShrink := total.Shrink.Val
-				// no infinite shrinkage should occur here
-				badness = math.Min(1e4, 100*math.Pow(needShrink/canShrink, 3))
+				canShrink, order := total.Shrink.Dominant()
+				if order == 0 {
+					badness = math.Min(1e4, 100*math.Pow(needShrink/canShrink, 3))
+				}
 			}
 
 			res = append(res, vCandidate{
@@ -225,10 +225,10 @@ func (e *Engine) vGetCandidates(height float64) []vCandidate {
 			prevDepth = ext.Depth
 
 			if stretch, ok := box.(stretcher); ok {
-				total.Stretch.IncrementBy(stretch.GetStretch())
+				total.Stretch.Add(stretch.GetStretch())
 			}
 			if shrink, ok := box.(shrinker); ok {
-				total.Shrink.IncrementBy(shrink.GetShrink())
+				total.Shrink.Add(shrink.GetShrink())
 			}
 		}
 	}

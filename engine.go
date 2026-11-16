@@ -95,13 +95,13 @@ func (e *Engine) HAddText(F *FontInfo, text string) {
 
 	spaceGlue := &Glue{
 		Length:  pdfSpaceWidth,
-		Stretch: glueAmount{Val: pdfSpaceWidth / 2},
-		Shrink:  glueAmount{Val: pdfSpaceWidth / 3},
+		Stretch: GlueAmount{pdfSpaceWidth / 2},
+		Shrink:  GlueAmount{pdfSpaceWidth / 3},
 	}
 	xSpaceGlue := &Glue{
 		Length:  1.5 * pdfSpaceWidth,
-		Stretch: glueAmount{Val: pdfSpaceWidth * 1.5},
-		Shrink:  glueAmount{Val: pdfSpaceWidth},
+		Stretch: GlueAmount{pdfSpaceWidth * 1.5},
+		Shrink:  GlueAmount{pdfSpaceWidth},
 	}
 
 	var run []rune

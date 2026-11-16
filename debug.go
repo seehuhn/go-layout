@@ -256,10 +256,10 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 		prevDepth = ext.Depth
 
 		if stretch, ok := box.(stretcher); ok {
-			total.Stretch.IncrementBy(stretch.GetStretch())
+			total.Stretch.Add(stretch.GetStretch())
 		}
 		if shrink, ok := box.(shrinker); ok {
-			total.Shrink.IncrementBy(shrink.GetShrink())
+			total.Shrink.Add(shrink.GetShrink())
 		}
 
 		b.TextBegin()
@@ -289,7 +289,6 @@ func (e *Engine) DebugPageBreak(tree *pagetree.Writer, rm *pdf.ResourceManager) 
 		b.TextShow(fmt.Sprintf("%s plus %s minus %s",
 			format(total.Length), formatS(total.Stretch), formatS(total.Shrink)))
 		b.TextEnd()
-		y -= 10
 	}
 
 	next := bestPos + 1
@@ -375,7 +374,6 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 	breaks := br.Run()
 
 	var startPos []int
-	var hLists [][]any
 	var lineContents [][]Box
 	var lineBoxes []Box
 	var xxx [][]float64
@@ -395,7 +393,6 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 				currentLine = append(currentLine, h.Box)
 			}
 		}
-		hLists = append(hLists, hList[prevPos:pos])
 		if e.RightSkip != nil {
 			currentLine = append(currentLine, e.RightSkip)
 		}
@@ -540,19 +537,27 @@ func (e *Engine) DebugLineBreaks(tree *pagetree.Writer, rm *pdf.ResourceManager,
 		b.TextShow(fmt.Sprintf("%+.1f", e.TextWidth-total.Length))
 		var r float64
 		if total.Length > e.TextWidth+0.05 {
-			r = (e.TextWidth - total.Length) / total.Shrink.Val
-			label := fmt.Sprintf(" / %.1f (%.0f%%)", total.Shrink.Val, -100*r)
-			if total.Stretch.Order > 0 {
-				r = 0
-				label = " / inf"
+			shrink, order := total.Shrink.Dominant()
+			label := " / inf"
+			if order == 0 && shrink != 0 {
+				r = (e.TextWidth - total.Length) / shrink
+				label = fmt.Sprintf(" / %.1f (%.0f%%)", shrink, -100*r)
+			} else if order == 0 {
+				// no shrink available
+				r = math.Inf(-1)
+				label = " / 0"
 			}
 			b.TextShow(label)
 		} else if total.Length < e.TextWidth-0.05 {
-			r = (e.TextWidth - total.Length) / total.Stretch.Val
-			label := fmt.Sprintf(" / %.1f (%.0f%%)", total.Stretch.Val, 100*r)
-			if total.Stretch.Order > 0 {
-				r = 0
-				label = " / inf"
+			stretch, order := total.Stretch.Dominant()
+			label := " / inf"
+			if order == 0 && stretch != 0 {
+				r = (e.TextWidth - total.Length) / stretch
+				label = fmt.Sprintf(" / %.1f (%.0f%%)", stretch, 100*r)
+			} else if order == 0 {
+				// no stretch available
+				r = math.Inf(+1)
+				label = " / 0"
 			}
 			b.TextShow(label)
 		}
@@ -602,10 +607,28 @@ func format(x float64) string {
 	return fmt.Sprintf("%.3f", x)
 }
 
-func formatS(x glueAmount) string {
-	unit := ""
-	if x.Order > 0 {
-		unit = "fi" + strings.Repeat("l", x.Order)
+func formatS(x GlueAmount) string {
+	var sb strings.Builder
+	for order, val := range x {
+		if val == 0 {
+			continue
+		}
+		switch {
+		case sb.Len() == 0:
+			// the first term carries its own sign
+		case val < 0:
+			sb.WriteString(" - ")
+			val = -val
+		default:
+			sb.WriteString(" + ")
+		}
+		sb.WriteString(format(val))
+		if order > 0 {
+			sb.WriteString("fi" + strings.Repeat("l", order))
+		}
 	}
-	return format(x.Val) + unit
+	if sb.Len() == 0 {
+		return "0"
+	}
+	return sb.String()
 }

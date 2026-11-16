@@ -232,21 +232,21 @@ func (br *knuthPlassLineBreaker) AdjustmentRatio(a *knuthPlassNode, b int) float
 	available := br.lineWidth(a.line)
 	br.scratch.SetMinus(&br.scratch, available)
 	if br.scratch.Length < -1e-3 { // loose line
-		stretch := br.scratch.Stretch
-		if stretch.Order > 0 {
+		stretch, order := br.scratch.Stretch.Dominant()
+		if order > 0 {
 			return 0
 		}
-		if stretch.Val > 0 {
-			return -br.scratch.Length / stretch.Val
+		if stretch > 0 {
+			return -br.scratch.Length / stretch
 		}
 		return math.Inf(+1)
 	} else if br.scratch.Length > 1e-3 { // tight line
-		shrink := br.scratch.Shrink
-		if shrink.Order > 0 {
+		shrink, order := br.scratch.Shrink.Dominant()
+		if order > 0 {
 			return 0
 		}
-		if shrink.Val > 0 {
-			return -br.scratch.Length / shrink.Val
+		if shrink > 0 {
+			return -br.scratch.Length / shrink
 		}
 		return math.Inf(+1)
 	}

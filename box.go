@@ -166,23 +166,25 @@ func horizontalLayout(xLeft, width float64, boxes ...Box) []float64 {
 	x := xLeft
 	xx := make([]float64, 0, len(boxes))
 	total := totalWidthAndGlue(boxes)
-	if total.Length < width-eps && total.Stretch.Val > 0 {
-		// contents are too narrow, stretch all available glue
-		q := (width - total.Length) / total.Stretch.Val
+	stretch, stretchOrder := total.Stretch.Dominant()
+	shrink, shrinkOrder := total.Shrink.Dominant()
+	if total.Length < width-eps && stretch != 0 {
+		// contents are too narrow, stretch the glue of the dominant order
+		q := (width - total.Length) / stretch
 		for _, box := range boxes {
 			xx = append(xx, x)
-			x += box.Extent().Width + q*getStretch(box, total.Stretch.Order)
+			x += box.Extent().Width + q*getStretch(box, stretchOrder)
 		}
-	} else if total.Length > width+eps && total.Shrink.Val > 0 {
-		// contents are too wide, shrink all available glue
-		q := (total.Length - width) / total.Shrink.Val
-		if total.Shrink.Order == 0 && q > 1 {
+	} else if total.Length > width+eps && shrink != 0 {
+		// contents are too wide, shrink the glue of the dominant order
+		q := (total.Length - width) / shrink
+		if shrinkOrder == 0 && q > 1 {
 			// glue can't shrink beyond its minimum width
 			q = 1
 		}
 		for _, box := range boxes {
 			xx = append(xx, x)
-			x += box.Extent().Width - q*getShrink(box, total.Shrink.Order)
+			x += box.Extent().Width - q*getShrink(box, shrinkOrder)
 		}
 	} else {
 		// lay out contents at their natural width
@@ -271,25 +273,27 @@ func verticalLayout(yTop, height float64, boxes ...Box) []float64 {
 	y := yTop
 	yy := make([]float64, 0, len(boxes))
 	total := totalHeightAndGlue(boxes)
-	if total.Length < height-eps && total.Stretch.Val > 0 {
-		// contents are too short, stretch all available glue
-		q := (height - total.Length) / total.Stretch.Val
+	stretch, stretchOrder := total.Stretch.Dominant()
+	shrink, shrinkOrder := total.Shrink.Dominant()
+	if total.Length < height-eps && stretch != 0 {
+		// contents are too short, stretch the glue of the dominant order
+		q := (height - total.Length) / stretch
 		for _, box := range boxes {
 			ext := box.Extent()
-			y -= ext.Height + q*getStretch(box, total.Stretch.Order)
+			y -= ext.Height + q*getStretch(box, stretchOrder)
 			yy = append(yy, y)
 			y -= ext.Depth
 		}
-	} else if total.Length > height+eps && total.Shrink.Val > 0 {
-		// contents are too tall, shrink all available glue
-		q := (total.Length - height) / total.Shrink.Val
-		if total.Shrink.Order == 0 && q > 1 {
+	} else if total.Length > height+eps && shrink != 0 {
+		// contents are too tall, shrink the glue of the dominant order
+		q := (total.Length - height) / shrink
+		if shrinkOrder == 0 && q > 1 {
 			// glue can't shrink beyond its minimum width
 			q = 1
 		}
 		for _, box := range boxes {
 			ext := box.Extent()
-			y -= ext.Height - q*getShrink(box, total.Shrink.Order)
+			y -= ext.Height - q*getShrink(box, shrinkOrder)
 			yy = append(yy, y)
 			y -= ext.Depth
 		}

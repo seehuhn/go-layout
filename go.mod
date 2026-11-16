@@ -3,6 +3,7 @@ module seehuhn.de/go/layout
 go 1.27.2
 
 require (
+	github.com/google/go-cmp v0.7.0
 	golang.org/x/text v0.40.0
 	seehuhn.de/go/pdf v0.8.0
 	seehuhn.de/go/sfnt v0.8.0

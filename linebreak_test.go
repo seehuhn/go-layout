@@ -35,7 +35,7 @@ func TestLineBreaks(t *testing.T) {
 
 	e := &Engine{
 		TextWidth:    hSize,
-		RightSkip:    &Glue{Stretch: glueAmount{Val: 36, Order: 0}},
+		RightSkip:    &Glue{Stretch: GlueAmount{36}},
 		ParFillSkip:  Skip(0, 1, 1, 0, 0),
 		BaseLineSkip: fontSize * geom.Leading,
 	}

@@ -99,3 +99,25 @@ func TestVBreakCandidates2(t *testing.T) {
 		t.Fatalf("expected break with penalty 456, got %f", cand[0].penalty)
 	}
 }
+
+func TestVBreakInfiniteStretch(t *testing.T) {
+	e := &Engine{
+		vList: []Box{
+			&ruleBox{Width: 10, Height: 10},
+			Skip(0, 1, 1, 0, 0),
+			&ruleBox{Width: 10, Height: 10},
+		},
+	}
+
+	cand := e.vGetCandidates(40)
+	if len(cand) == 0 {
+		t.Fatal("no break candidates")
+	}
+	last := cand[len(cand)-1]
+	if last.pos != 3 {
+		t.Fatalf("last break at pos %d, want 3", last.pos)
+	}
+	if last.badness != 0 {
+		t.Errorf("badness = %g, want 0", last.badness)
+	}
+}
