@@ -4,8 +4,6 @@
 package layout
 
 import (
-	"math"
-
 	"seehuhn.de/go/pdf/font"
 	"seehuhn.de/go/pdf/graphics/color"
 	"seehuhn.de/go/pdf/graphics/content/builder"
@@ -33,30 +31,28 @@ func Text(F *FontInfo, text string) *TextBox {
 	}
 }
 
-// Extent implements the [Box] interface
+// Extent implements the [Box] interface.
+// Height and depth are never negative.  A glyph whose ink has no bound
+// counts as reaching from the font's descent to its ascent.
 func (obj *TextBox) Extent() *BoxExtent {
-	font := obj.F.Font
-	geom := font.GetGeometry()
+	g := obj.F.Font.GetGeometry()
 
-	width := 0.0
-	height := math.Inf(-1)
-	depth := math.Inf(-1)
+	var width, height, depth float64
 	for _, glyph := range obj.Glyphs.Seq {
 		width += glyph.Advance
 
-		bbox := &geom.GlyphExtents[glyph.GID]
-		if bbox.IsZero() {
+		var lly, ury float64
+		switch {
+		case g.IsBlank(glyph.GID):
 			continue
+		case g.IsUnbounded(glyph.GID):
+			lly, ury = g.Descent, g.Ascent
+		default:
+			bbox := &g.GlyphExtents[glyph.GID]
+			lly, ury = bbox.LLy, bbox.URy
 		}
-		thisDepth := -(bbox.LLy*obj.F.Size + glyph.Rise)
-		thisHeight := bbox.URy*obj.F.Size + glyph.Rise
-
-		if thisDepth > depth {
-			depth = thisDepth
-		}
-		if thisHeight > height {
-			height = thisHeight
-		}
+		depth = max(depth, -(lly*obj.F.Size + glyph.Rise))
+		height = max(height, ury*obj.F.Size+glyph.Rise)
 	}
 
 	return &BoxExtent{
@@ -68,10 +64,8 @@ func (obj *TextBox) Extent() *BoxExtent {
 
 // Draw implements the [Box] interface.
 func (obj *TextBox) Draw(page *builder.Builder, xPos, yPos float64) {
-	font := obj.F.Font
-
 	page.TextBegin()
-	page.TextSetFont(font, obj.F.Size)
+	page.TextSetFont(obj.F.Font, obj.F.Size)
 	if obj.F.Color != nil {
 		page.SetFillColor(obj.F.Color)
 	} else {
